@@ -1,5 +1,5 @@
 [connections.hol-timeseries]
-account = "<SNOWFLAKE_DEPLOYMENT>"
+account = "ll97996.ap-southeast-2"
 user = "USER_HOL_TIMESERIES"
 role = "ROLE_HOL_TIMESERIES"
 database = "HOL_TIMESERIES"
@@ -9,11 +9,11 @@ authenticator = "SNOWFLAKE_JWT"
 private_key_path = "keys/rsa_key.p8"
 
 [connections.hol-timeseries-streamlit]
-account = "<SNOWFLAKE_DEPLOYMENT>"
+account = "ll97996.ap-southeast-2"
 user = "USER_HOL_TIMESERIES"
 role = "ROLE_HOL_TIMESERIES"
 database = "HOL_TIMESERIES"
 schema = "ANALYTICS"
 warehouse = "HOL_REPORT_WH"
 authenticator = "SNOWFLAKE_JWT"
-private_key_path = "../keys/rsa_key.p8"
+private_key_path = "keys/rsa_key.p8"
