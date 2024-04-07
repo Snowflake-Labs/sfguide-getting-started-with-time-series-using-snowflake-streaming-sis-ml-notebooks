@@ -1,0 +1,22 @@
+# Local HOL
+# Create: conda env create -f .devcontainer/codespace_environment.yml
+# Activate: conda activate hol-timeseries
+# Remove: conda remove -n hol-timeseries --all
+
+name: hol-timeseries
+channels:
+  - https://repo.anaconda.com/pkgs/snowflake
+dependencies:
+  - python=3.11
+  - snowflake-snowpark-python[secure-local-storage,pandas]=1.13.0
+  - altair=4.2.2
+  - pandas=2.0.3
+  - setuptools=68.2.2
+  - plotly-resampler=0.8.3.2
+  - h5py=3.9.0
+  - notebook=7.0.8
+  - openpyxl=3.0.10
+  - pip
+  - pip:
+    - streamlit==1.26.0
+    - snowflake-cli-labs==2.1.2

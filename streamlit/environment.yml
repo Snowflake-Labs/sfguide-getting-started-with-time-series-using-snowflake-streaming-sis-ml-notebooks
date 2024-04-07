@@ -1,0 +1,8 @@
+# Streamlit in Snowflake
+name: hol-timeseries-streamlit
+channels:
+  - snowflake
+dependencies:
+  - streamlit=1.26.0
+  - altair=4.2.2
+  - pandas=2.0.3

@@ -1,0 +1,19 @@
+[connections.hol-timeseries]
+account = "<SNOWFLAKE_DEPLOYMENT>"
+user = "USER_HOL_TIMESERIES"
+role = "ROLE_HOL_TIMESERIES"
+database = "HOL_TIMESERIES"
+schema = "STAGING"
+warehouse = "HOL_INGEST_WH"
+authenticator = "SNOWFLAKE_JWT"
+private_key_path = "keys/rsa_key.p8"
+
+[connections.hol-timeseries-streamlit]
+account = "<SNOWFLAKE_DEPLOYMENT>"
+user = "USER_HOL_TIMESERIES"
+role = "ROLE_HOL_TIMESERIES"
+database = "HOL_TIMESERIES"
+schema = "ANALYTICS"
+warehouse = "HOL_REPORT_WH"
+authenticator = "SNOWFLAKE_JWT"
+private_key_path = "../keys/rsa_key.p8"

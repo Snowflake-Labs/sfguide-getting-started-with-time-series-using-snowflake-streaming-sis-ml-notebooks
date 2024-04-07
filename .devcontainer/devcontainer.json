@@ -1,0 +1,37 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/python
+{
+	"name": "snowflake-hol-timeseries",
+	"image": "mcr.microsoft.com/devcontainers/python:0-3.11",
+
+	// Install conda and java 11 features
+	"features": {
+		"ghcr.io/devcontainers/features/conda:1": {
+			"version": "latest"
+		},
+		"ghcr.io/devcontainers/features/java:1": {
+			"version": "11"
+		}
+	},
+	
+	// POST create and init conda environment
+	"postCreateCommand": "./.devcontainer/postCreateCommand.sh",
+
+	// VS code exentions
+	"customizations": {
+		// Configure properties specific to VS Code.
+		"vscode": {
+		  // Add the IDs of extensions you want installed when the container is created.
+		  "extensions": [
+			"snowflake.snowflake-vsc",
+			"ms-toolsai.jupyter",
+			"h5web.vscode-h5web",
+			"redhat.vscode-xml",
+			"redhat.vscode-yaml",
+			"tomoki1207.pdf",
+			"mechatroner.rainbow-csv",
+			"vscjava.vscode-java-pack"
+		  ]
+		}
+	  }
+}
