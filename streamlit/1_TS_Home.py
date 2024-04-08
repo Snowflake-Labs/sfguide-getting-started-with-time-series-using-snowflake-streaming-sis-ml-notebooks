@@ -10,3 +10,8 @@ import datetime
 
 # Set page config
 st.set_page_config(layout="wide")
+
+# Use active session
+session = get_active_session()
+
+session = get_active_session()
