@@ -21,17 +21,22 @@
 	"customizations": {
 		// Configure properties specific to VS Code.
 		"vscode": {
-		  // Add the IDs of extensions you want installed when the container is created.
-		  "extensions": [
-			"snowflake.snowflake-vsc",
-			"ms-toolsai.jupyter",
-			"h5web.vscode-h5web",
-			"redhat.vscode-xml",
-			"redhat.vscode-yaml",
-			"tomoki1207.pdf",
-			"mechatroner.rainbow-csv",
-			"vscjava.vscode-java-pack"
-		  ]
+			// Set VSCode settings
+			"settings": {
+				"python.defaultInterpreterPath": "/opt/conda/envs/hol-timeseries",
+				"python.terminal.activateEnvInCurrentTerminal": true
+			},
+			// Add the IDs of extensions you want installed when the container is created.
+			"extensions": [
+				"snowflake.snowflake-vsc",
+				"ms-toolsai.jupyter",
+				"h5web.vscode-h5web",
+				"redhat.vscode-xml",
+				"redhat.vscode-yaml",
+				"tomoki1207.pdf",
+				"mechatroner.rainbow-csv",
+				"vscjava.vscode-java-pack"
+			]
 		}
-	  }
+	}
 }
