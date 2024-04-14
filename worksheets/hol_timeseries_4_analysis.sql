@@ -9,7 +9,7 @@ SELECT
     META.TAGNAME,
     META.TAGALIAS,
     META.TAGDESCRIPTION,
-    META.TAGUOM,
+    META.TAGUNITS,
     META.TAGDATATYPE
 FROM HOL_TIMESERIES.TRANSFORM.TS_TAG_METADATA META;
 
@@ -34,71 +34,76 @@ SELECT * FROM HOL_TIMESERIES.ANALYTICS.TS_TAG_READINGS;
 -- Run Time Series Analysis across various query profiles
 
 -- RAW DATA
-SELECT tagname, timestamp, value, NULL AS value_numeric
+SELECT tagname, timestamp, value
 FROM HOL_TIMESERIES.ANALYTICS.TS_TAG_READINGS
 WHERE timestamp > '2000-03-26 12:45:37' 
-AND timestamp <= '2024-03-26 14:45:37' 
-AND tagname = '/WITSML/NO 15/9-F-7/DEPTH' 
+AND timestamp <= '2024-04-26 14:45:37' 
+AND tagname = '/IOT/SENSOR/100' 
 ORDER BY tagname, timestamp
 ;
 
 -- HI WATER
-SELECT tagname, to_timestamp('2024-03-26 14:47:55') AS timestamp, MAX_BY(value, timestamp) AS value, MAX_BY(value_numeric, timestamp) AS value_numeric 
+SELECT tagname, to_timestamp('2024-03-26 14:47:55') AS timestamp, MAX_BY(value, timestamp) AS value
 FROM HOL_TIMESERIES.ANALYTICS.TS_TAG_READINGS
-WHERE timestamp > '2000-03-26 08:47:55' 
-AND timestamp <= '2024-03-26 14:47:55' 
-AND tagname = '/WITSML/NO 15/9-F-7/DEPTH' 
+WHERE timestamp > '2000-03-26 12:45:37' 
+AND timestamp <= '2024-04-26 14:45:37' 
+AND tagname = '/IOT/SENSOR/100'
 GROUP BY tagname 
 ORDER BY tagname, timestamp
 ;
 
 -- LOW WATER
-SELECT tagname, to_timestamp('2024-03-26 14:47:55') AS timestamp, MIN_BY(value, timestamp) AS value, MIN_BY(value_numeric, timestamp) AS value_numeric 
+SELECT tagname, to_timestamp('2024-03-26 14:47:55') AS timestamp, MIN_BY(value, timestamp) AS value
 FROM HOL_TIMESERIES.ANALYTICS.TS_TAG_READINGS
-WHERE timestamp > '2000-03-26 08:47:55' 
-AND timestamp <= '2024-03-26 14:47:55' 
-AND tagname = '/WITSML/NO 15/9-F-7/DEPTH' 
+WHERE timestamp > '2000-03-26 12:45:37' 
+AND timestamp <= '2024-04-26 14:45:37' 
+AND tagname = '/IOT/SENSOR/100'
 GROUP BY tagname 
 ORDER BY tagname, timestamp
 ;
 
 -- DOWNSAMPLING / RESAMPLING
 
--- BINNING
-SELECT tagname, TIME_SLICE(DATEADD(MILLISECOND, -1, timestamp), 15, 'MINUTE', 'END') AS timestamp, NULL AS value, APPROX_PERCENTILE(value_numeric, 0.5) AS value_numeric
+-- BINNING - PERCENTILE
+SELECT tagname, TIME_SLICE(DATEADD(MILLISECOND, -1, timestamp), 10, 'SECOND', 'END') AS timestamp, APPROX_PERCENTILE(value_numeric, 0.5) AS value
 FROM HOL_TIMESERIES.ANALYTICS.TS_TAG_READINGS 
-WHERE timestamp > '2000-03-26 02:58:38' AND timestamp <= '2024-03-28 14:58:38' 
-AND tagname IN ('/WITSML/NO 15/9-F-7/DEPTH') 
-GROUP BY TIME_SLICE(DATEADD(MILLISECOND, -1, timestamp), 15, 'MINUTE', 'END'), tagname 
+WHERE timestamp > '2000-03-26 12:45:37' 
+AND timestamp <= '2024-04-26 14:45:37' 
+AND tagname = '/IOT/SENSOR/100'
+GROUP BY TIME_SLICE(DATEADD(MILLISECOND, -1, timestamp), 10, 'SECOND', 'END'), tagname 
+ORDER BY tagname, timestamp
+;
+
+-- BINNING - AVERAGE
+SELECT tagname, TIME_SLICE(DATEADD(MILLISECOND, -1, timestamp), 10, 'SECOND', 'END') AS timestamp, AVG(value_numeric) AS value, count(*) as reading_count
+FROM HOL_TIMESERIES.ANALYTICS.TS_TAG_READINGS 
+WHERE timestamp > '2000-03-26 12:45:37' 
+AND timestamp <= '2024-04-26 14:45:37' 
+AND tagname = '/IOT/SENSOR/100'
+GROUP BY TIME_SLICE(DATEADD(MILLISECOND, -1, timestamp), 10, 'SECOND', 'END'), tagname 
 ORDER BY tagname, timestamp
 ;
 
 -- FIRST_VALUE / LAST_VALUE
-SELECT tagname, ts as timestamp, f_value_numeric, l_value_numeric
+SELECT tagname, ts as timestamp, f_value, l_value
 FROM (
-SELECT tagname, TIME_SLICE(DATEADD(MILLISECOND, -1, timestamp), 5, 'MINUTE', 'END') AS ts, timestamp, value_numeric, FIRST_VALUE(value_numeric) OVER (PARTITION BY tagname, ts ORDER BY timestamp) AS f_value_numeric, LAST_VALUE(value_numeric) OVER (PARTITION BY tagname, ts ORDER BY timestamp) AS l_value_numeric 
+SELECT tagname, TIME_SLICE(DATEADD(MILLISECOND, -1, timestamp), 10, 'SECOND', 'END') AS ts, timestamp, value_numeric, FIRST_VALUE(value_numeric) OVER (PARTITION BY tagname, ts ORDER BY timestamp) AS f_value, LAST_VALUE(value_numeric) OVER (PARTITION BY tagname, ts ORDER BY timestamp) AS l_value
 FROM HOL_TIMESERIES.ANALYTICS.TS_TAG_READINGS  
-WHERE timestamp > '2000-03-26 03:29:08' AND timestamp <= '2024-03-28 15:29:08' 
-AND tagname = '/WITSML/NO 15/9-F-7/DEPTH' 
-GROUP BY TIME_SLICE(DATEADD(MILLISECOND, -1, timestamp), 5, 'MINUTE', 'END'), timestamp, tagname, value_numeric
+WHERE timestamp > '2000-03-26 12:45:37' 
+AND timestamp <= '2024-04-26 14:45:37' 
+AND tagname = '/IOT/SENSOR/100'
+GROUP BY TIME_SLICE(DATEADD(MILLISECOND, -1, timestamp), 10, 'SECOND', 'END'), timestamp, tagname, value_numeric
 )
-GROUP BY tagname, ts, f_value_numeric, l_value_numeric
+GROUP BY tagname, ts, f_value, l_value
 ORDER BY tagname, ts
 ;
 
 -- STDDEV
-SELECT tagname, TIME_SLICE(DATEADD(MILLISECOND, -1, timestamp), 15, 'MINUTE', 'END') AS timestamp, NULL AS value, STDDEV(value_numeric) AS value_numeric 
+SELECT tagname, TIME_SLICE(DATEADD(MILLISECOND, -1, timestamp), 10, 'SECOND', 'END') AS timestamp, STDDEV(value_numeric) AS value 
 FROM HOL_TIMESERIES.ANALYTICS.TS_TAG_READINGS 
-WHERE timestamp > '2000-03-26 15:00:50' AND timestamp <= '2024-03-25 15:00:50' 
-AND tagname = '/WITSML/NO 15/9-F-7/DEPTH' 
-GROUP BY TIME_SLICE(DATEADD(MILLISECOND, -1, timestamp), 15, 'MINUTE', 'END'), tagname 
+WHERE timestamp > '2000-03-26 12:45:37' 
+AND timestamp <= '2024-04-26 14:45:37' 
+AND tagname = '/IOT/SENSOR/100' 
+GROUP BY TIME_SLICE(DATEADD(MILLISECOND, -1, timestamp), 10, 'SECOND', 'END'), tagname 
 ORDER BY tagname, timestamp
 ;
-
-select unique_id
-from TIME_SERIES_DATA_GENERATOR.CORE.SYNTHETIC_DATA
-group by unique_id;
-
-select * from TIME_SERIES_DATA_GENERATOR.CORE.SYNTHETIC_DATA
-where unique_id = 28
-order by date_time;
