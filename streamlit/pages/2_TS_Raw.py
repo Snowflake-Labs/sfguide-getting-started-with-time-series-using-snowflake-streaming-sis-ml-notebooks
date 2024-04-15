@@ -19,29 +19,17 @@ session = get_active_session()
 # get a list of all tags
 df_tags = session.table('TS_TAG_REFERENCE').select(F.col('TAGNAME')).toPandas()
 
-# Query Type
-query_profile = ['Raw','Downsample', 'Binning']
-
 st.sidebar.markdown('## Tag Selection')
 taglist = st.sidebar.multiselect('Select Tag Names', df_tags)
 
+# TODO: Include timestamp slider into time delta select and default last 1 hour
 st.sidebar.markdown('## Time Selection')
 start_date = st.sidebar.date_input('Start Date', datetime.datetime.now() - timedelta(days=7), datetime.date(2000, 1, 1), datetime.date(2030, 12, 31))
 end_date = st.sidebar.date_input('End Date', datetime.datetime.now(), datetime.date(2000, 1, 1), datetime.date(2030, 12, 31))
 start_time, end_time = st.sidebar.slider("Time range",value=(time(00, 00), time(00, 00)))
 
-# get the timeseries history
-# df_raw = session.table('TS_TAG_READINGS') \
-#     .select( \
-#         F.col('TAGNAME'), \
-#         F.col('TIMESTAMP'), \
-#         F.col('VALUE_NUMERIC')) \
-#     .filter( \
-#         (F.col('TIMESTAMP') >= F.lit(start_date)) & \
-#         (F.col('TIMESTAMP') < F.lit(end_date)) & \
-#         (F.col('TAGNAME')).isin(taglist))
-
-sql_str = '''
+# TS Raw Data queries
+raw_sql_str = '''
 SELECT data.tagname, lttb.timestamp::varchar::timestamp_ntz AS timestamp, NULL AS value, lttb.value_numeric
 FROM (
 SELECT tagname, timestamp, value_numeric
@@ -55,10 +43,10 @@ ORDER BY tagname, timestamp'''
 st.write(taglist)
 filter = (*taglist, "", "")
 st.write(str(tuple(filter)))
-st.write(sql_str)
+st.write(raw_sql_str)
 
 df_raw = session.sql(
-    sql_str \
+    raw_sql_str \
         .replace("{start_date}", str(start_date)) \
         .replace("{end_date}", str(end_date)) \
         .replace("{taglist}", str(tuple(filter))))
