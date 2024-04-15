@@ -2,7 +2,7 @@ definition_version: 1
 streamlit:
   name: HOL_TIMESERIES_STREAMLIT
   stage: HOL_TIMESERIES.ANALYTICS.STAGE_TS_STREAMLIT
-  query_warehouse: HOL_REPORT_WH
+  query_warehouse: HOL_ANALYTICS_WH
   main_file: streamlit/1_TS_Home.py
   env_file: streamlit/environment.yml
   pages_dir: streamlit/pages/

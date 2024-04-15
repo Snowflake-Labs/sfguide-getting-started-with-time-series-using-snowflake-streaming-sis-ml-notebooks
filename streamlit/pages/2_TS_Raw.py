@@ -24,20 +24,20 @@ taglist = st.sidebar.multiselect('Select Tag Names', df_tags)
 
 # TODO: Include timestamp slider into time delta select and default last 1 hour
 st.sidebar.markdown('## Time Selection')
-start_date = st.sidebar.date_input('Start Date', datetime.datetime.now() - timedelta(days=7), datetime.date(2000, 1, 1), datetime.date(2030, 12, 31))
-end_date = st.sidebar.date_input('End Date', datetime.datetime.now(), datetime.date(2000, 1, 1), datetime.date(2030, 12, 31))
+start_date = st.sidebar.date_input('Start Date', datetime.datetime.now() - timedelta(days=1), datetime.date(2000, 1, 1), datetime.date(2030, 12, 31))
+end_date = st.sidebar.date_input('End Date', datetime.datetime.now() + timedelta(days=1), datetime.date(2000, 1, 1), datetime.date(2030, 12, 31))
 start_time, end_time = st.sidebar.slider("Time range",value=(time(00, 00), time(00, 00)))
 
 # TS Raw Data queries
 raw_sql_str = '''
-SELECT data.tagname, lttb.timestamp::varchar::timestamp_ntz AS timestamp, NULL AS value, lttb.value_numeric
+SELECT data.tagname, lttb.timestamp::varchar::timestamp_ntz AS timestamp, lttb.value::float as value
 FROM (
-SELECT tagname, timestamp, value_numeric
+SELECT tagname, timestamp, VALUE_NUMERIC as VALUE
 FROM TS_TAG_READINGS
 WHERE timestamp >= DATE '{start_date}' AND timestamp < DATE '{end_date}'
 AND tagname IN {taglist}
 ) AS data
-CROSS JOIN TABLE(function_ts_lttb(date_part(epoch_nanosecond, data.timestamp), data.value_numeric, 500) OVER (PARTITION BY data.tagname ORDER BY data.timestamp)) AS lttb
+CROSS JOIN TABLE(function_ts_lttb(date_part(epoch_nanosecond, data.timestamp), data.VALUE, 100) OVER (PARTITION BY data.tagname ORDER BY data.timestamp)) AS lttb
 ORDER BY tagname, timestamp'''
 
 st.write(taglist)
@@ -54,7 +54,7 @@ df_raw = session.sql(
 # add the line charts
 with st.container():
     st.subheader('Tag Data')
-    alt_chart_1 = alt.Chart(df_raw.to_pandas()).mark_line().encode(x="TIMESTAMP",y="VALUE_NUMERIC")
+    alt_chart_1 = alt.Chart(df_raw.to_pandas()).mark_line().encode(x="TIMESTAMP",y="VALUE")
     st.altair_chart(alt_chart_1, use_container_width=True)
     # fig = px.line(df_raw, x='TIMESTAMP', y='VALUE_NUMERIC', color='TAGNAME')
     # st.plotly_chart(fig, use_container_width=True, render='svg')
