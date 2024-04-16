@@ -16,6 +16,7 @@ st.set_page_config(layout="wide")
 # Get current session
 session = get_active_session()
 
+
 # get a list of all tags
 df_tags = session.table('TS_TAG_REFERENCE').select(F.col('TAGNAME')).toPandas()
 
@@ -25,18 +26,55 @@ query_profile = ['Raw','Downsample', 'Binning']
 st.sidebar.markdown('## Tag Selection')
 taglist = st.sidebar.multiselect('Select Tag Names', df_tags)
 
+# Correct way to handle the SQL tuple for taglist
+if len(taglist) == 1:
+    tag_tuple = f"('{taglist[0]}')"
+elif taglist:
+    tag_tuple = str(tuple(taglist))
+else:
+    tag_tuple = "('')"  # Default or error case handling: no tags selected
+
+# Fetch tag metadata for selected tags 
+if taglist:
+    query = """
+    SELECT TAGNAME, TAGUNITS, TAGDATATYPE FROM TS_TAG_REFERENCE
+    WHERE TAGNAME IN ({})
+    """.format(", ".join(f"'{tag}'" for tag in taglist))
+    df_tag_metadata = session.sql(query).toPandas()
+else:
+    df_tag_metadata = pd.DataFrame(columns=['TAGNAME', 'TAGUNITS', 'TAGDATATYPE'])
+
+st.table(df_tag_metadata)
+
 # Set time range
 st.sidebar.markdown('## Time Selection (UTC)')
 start_date = st.sidebar.date_input('Start Date', datetime.datetime.now(datetime.timezone.utc) - timedelta(hours=8), datetime.date(2024, 1, 1), datetime.date(2030, 12, 31))
 end_date = st.sidebar.date_input('End Date', datetime.datetime.now(datetime.timezone.utc), datetime.date(2024, 1, 1), datetime.date(2030, 12, 31))
-start_time, end_time = st.sidebar.slider("Time range",value=(time(int(datetime.datetime.now(datetime.timezone.utc).strftime("%H"))-8, int(datetime.datetime.now(datetime.timezone.utc).strftime("%M"))), time(int(datetime.datetime.now(datetime.timezone.utc).strftime("%H")), int(datetime.datetime.now(datetime.timezone.utc).strftime("%M")))))
+current_hour = int(datetime.datetime.now(datetime.timezone.utc).strftime("%H"))
+current_minute = int(datetime.datetime.now(datetime.timezone.utc).strftime("%M"))
+start_hour = (current_hour - 8) % 24 
 
+start_time, end_time = st.sidebar.slider(
+    "Time range",
+    value=(
+        time(start_hour, current_minute),
+        time(current_hour, current_minute)
+    )
+)
 # Chart sampling
 sample = st.sidebar.slider('Chart Sample', 100, 1000, 500)
 
 # Combine start and end date time components
 start_ts = datetime.datetime.combine(start_date, start_time)
 end_ts = datetime.datetime.combine(end_date, end_time)
+
+
+# BINNING - Configuration
+st.sidebar.markdown('## Binning Configuration')
+bin_range = st.sidebar.number_input('Enter Bin Range', min_value=1, value=10)  
+interval_unit = st.sidebar.selectbox('Select Interval Unit', ['seconds', 'minutes', 'hours', 'days', 'weeks'])
+label_position = st.sidebar.radio('Label Position', ['Start', 'End'], index=1)  
+
 
 # TS Query Builder
 query_str = '''
@@ -50,6 +88,18 @@ AND TAGNAME IN {taglist}
 ) AS DATA
 CROSS JOIN TABLE(FUNCTION_TS_LTTB(DATE_PART(EPOCH_NANOSECOND, DATA.TIMESTAMP), DATA.VALUE, 100) OVER (PARTITION BY DATA.TAGNAME ORDER BY DATA.TIMESTAMP)) AS LTTB
 ORDER BY TAGNAME, TIMESTAMP'''
+
+# Generate a SQL-compatible tuple from the tag list
+tag_tuple = str(tuple(taglist)) if len(taglist) > 1 else f"('{taglist[0]}')" if taglist else "()"
+
+# Define the binning SQL query
+binning_query = f'''
+SELECT TAGNAME, TIME_SLICE(DATEADD(MILLISECOND, -1, TIMESTAMP), {bin_range}, '{interval_unit}', '{label_position}') AS TIMESTAMP, AVG(VALUE_NUMERIC) AS AVG_VALUE
+FROM TS_TAG_READINGS
+WHERE TIMESTAMP >= '{start_ts}' AND TIMESTAMP < '{end_ts}' AND TAGNAME IN {tag_tuple}
+GROUP BY TAGNAME, TIMESTAMP
+ORDER BY TAGNAME, TIMESTAMP
+'''
 
 st.write(taglist)
 filter = (*taglist, "", "")
@@ -72,3 +122,12 @@ with st.container():
     # st.plotly_chart(fig, use_container_width=True, render='svg')
 
     st.table(df_data.collect())
+
+ # Execute and display results
+if taglist:
+    df_binned_data = session.sql(binning_query).toPandas()
+    with st.container():
+        st.subheader('Binned Data')
+        st.write(df_binned_data)
+else:
+    st.write("Select one or more tags to view binned data.")
