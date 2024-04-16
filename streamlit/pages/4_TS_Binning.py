@@ -12,6 +12,7 @@ import datetime
 
 # Set page config
 st.set_page_config(layout="wide")
+st.title('Time Series - Binning Queries')
 
 # Get current session
 session = get_active_session()
@@ -25,6 +26,7 @@ query_profile = ['Raw','Downsample', 'Binning']
 
 st.sidebar.markdown('## Tag Selection')
 taglist = st.sidebar.multiselect('Select Tag Names', df_tags)
+filter = (*taglist, "", "")
 
 # Correct way to handle the SQL tuple for taglist
 if len(taglist) == 1:
@@ -44,7 +46,7 @@ if taglist:
 else:
     df_tag_metadata = pd.DataFrame(columns=['TAGNAME', 'TAGUNITS', 'TAGDATATYPE'])
 
-st.table(df_tag_metadata)
+st.dataframe(df_tag_metadata, hide_index=True, use_container_width=True)
 
 # Set time range
 st.sidebar.markdown('## Time Selection (UTC)')
@@ -73,7 +75,7 @@ end_ts = datetime.datetime.combine(end_date, end_time)
 st.sidebar.markdown('## Binning Configuration')
 bin_range = st.sidebar.number_input('Enter Bin Range', min_value=1, value=10)  
 interval_unit = st.sidebar.selectbox('Select Interval Unit', ['seconds', 'minutes', 'hours', 'days', 'weeks'])
-label_position = st.sidebar.radio('Label Position', ['Start', 'End'], index=1)  
+label_position = st.sidebar.radio('Label Position', ['Start', 'End'], index=1, horizontal=True)  
 
 
 # TS Query Builder
@@ -97,37 +99,41 @@ binning_query = f'''
 SELECT TAGNAME, TIME_SLICE(DATEADD(MILLISECOND, -1, TIMESTAMP), {bin_range}, '{interval_unit}', '{label_position}') AS TIMESTAMP, AVG(VALUE_NUMERIC) AS AVG_VALUE
 FROM TS_TAG_READINGS
 WHERE TIMESTAMP >= '{start_ts}' AND TIMESTAMP < '{end_ts}' AND TAGNAME IN {tag_tuple}
-GROUP BY TAGNAME, TIMESTAMP
+GROUP BY TAGNAME, TIME_SLICE(DATEADD(MILLISECOND, -1, TIMESTAMP), {bin_range}, '{interval_unit}', '{label_position}')
 ORDER BY TAGNAME, TIMESTAMP
 '''
-
-st.write(taglist)
-filter = (*taglist, "", "")
-st.write(str(tuple(filter)))
-st.write(query_str)
 
 # TS dataframe with query variables
 df_data = session.sql(
     query_str \
         .replace("{start_ts}", str(start_ts)) \
         .replace("{end_ts}", str(end_ts)) \
-        .replace("{taglist}", str(tuple(filter))))
+        .replace("{taglist}", str(tuple(filter)))
+        )
 
 # Create chart plot
 with st.container():
     st.subheader('Tag Data')
-    alt_chart_1 = alt.Chart(df_data.to_pandas()).mark_line().encode(x="TIMESTAMP",y="VALUE")
+    alt_chart_1 = alt.Chart(df_data.to_pandas()).mark_line().encode(x="TIMESTAMP", y="VALUE", color="TAGNAME").interactive()
     st.altair_chart(alt_chart_1, use_container_width=True)
     # fig = px.line(df_data, x='TIMESTAMP', y='VALUE_NUMERIC', color='TAGNAME')
     # st.plotly_chart(fig, use_container_width=True, render='svg')
-
-    st.table(df_data.collect())
+    
+    st.dataframe(df_data.collect(), hide_index=True, use_container_width=True)
+    #st.table(df_data.collect())
 
  # Execute and display results
 if taglist:
-    df_binned_data = session.sql(binning_query).toPandas()
+    df_binned_data = session.sql(binning_query)
     with st.container():
         st.subheader('Binned Data')
-        st.write(df_binned_data)
+        st.dataframe(df_binned_data.collect(), hide_index=True, use_container_width=True)
 else:
     st.write("Select one or more tags to view binned data.")
+
+with st.expander("Supporting Detail", expanded=False):
+    st.write(taglist)
+    st.write(str(tuple(filter)))
+    st.write(query_str)
+    st.write(start_ts)
+    st.write(end_ts)

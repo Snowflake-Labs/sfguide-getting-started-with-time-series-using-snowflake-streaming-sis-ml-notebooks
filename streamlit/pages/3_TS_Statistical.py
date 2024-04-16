@@ -9,9 +9,11 @@ import plotly.express as px
 import streamlit as st
 import pandas as pd
 import datetime
+import json
 
 # Set page config
 st.set_page_config(layout="wide")
+st.title('Time Series - Statistical Queries')
 
 # Get current session
 session = get_active_session()
@@ -24,6 +26,7 @@ query_profile = ['Average','Count', 'Count Distinct']
 
 st.sidebar.markdown('## Tag Selection')
 taglist = st.sidebar.multiselect('Select Tag Names', df_tags)
+filter = (*taglist, "", "")
 
 # Fetch tag metadata for selected tags 
 if taglist:
@@ -35,8 +38,7 @@ if taglist:
 else:
     df_tag_metadata = pd.DataFrame(columns=['TAGNAME', 'TAGUNITS', 'TAGDATATYPE'])
 
-st.table(df_tag_metadata)
-
+st.dataframe(df_tag_metadata, hide_index=True, use_container_width=True)
 
 # Set time range
 st.sidebar.markdown('## Time Selection (UTC)')
@@ -75,18 +77,13 @@ AND TAGNAME IN {taglist}
 CROSS JOIN TABLE(FUNCTION_TS_LTTB(DATE_PART(EPOCH_NANOSECOND, DATA.TIMESTAMP), DATA.VALUE, 100) OVER (PARTITION BY DATA.TAGNAME ORDER BY DATA.TIMESTAMP)) AS LTTB
 ORDER BY TAGNAME, TIMESTAMP'''
 
-
-st.write(taglist)
-filter = (*taglist, "", "")
-st.write(str(tuple(filter)))
-st.write(query_str)
-
 # TS dataframe with query variables
 df_data = session.sql(
     query_str \
         .replace("{start_ts}", str(start_ts)) \
         .replace("{end_ts}", str(end_ts)) \
-        .replace("{taglist}", str(tuple(filter))))
+        .replace("{taglist}", str(tuple(filter)))
+        )
 
 
 
@@ -106,13 +103,12 @@ selected_tag = taglist[0] if taglist else '/IOT/SENSOR/100'
 # Create chart plot
 with st.container():
     st.subheader('Tag Data')
-    alt_chart_1 = alt.Chart(df_data.to_pandas()).mark_line().encode(x="TIMESTAMP",y="VALUE")
+    alt_chart_1 = alt.Chart(df_data.to_pandas()).mark_line().encode(x="TIMESTAMP", y="VALUE", color="TAGNAME").interactive()
     st.altair_chart(alt_chart_1, use_container_width=True)
     # fig = px.line(df_data, x='TIMESTAMP', y='VALUE_NUMERIC', color='TAGNAME')
     # st.plotly_chart(fig, use_container_width=True, render='svg')
 
-    st.table(df_data.collect())
-
+    st.dataframe(df_data.collect(), hide_index=True, use_container_width=True)
 
 # Display all metrics in a container
 with st.container():
@@ -120,3 +116,10 @@ with st.container():
     for name, query in stat_queries.items():
         result = session.sql(query.format(start_ts=start_ts, end_ts=end_ts, tag=selected_tag)).collect()[0][0]
         st.metric(label=name, value=result)
+
+with st.expander("Supporting Detail", expanded=False):
+    st.write(taglist)
+    st.write(str(tuple(filter)))
+    st.write(query_str)
+    st.write(start_ts)
+    st.write(end_ts)

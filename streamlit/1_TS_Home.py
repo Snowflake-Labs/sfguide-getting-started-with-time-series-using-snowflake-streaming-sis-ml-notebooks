@@ -10,6 +10,7 @@ import datetime
 
 # Set page config
 st.set_page_config(layout="wide")
+st.title('Getting Started with Time Series')
 
 # Use active session
 session = get_active_session()

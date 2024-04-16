@@ -20,4 +20,5 @@ dependencies:
   - pip
   - pip:
     - streamlit==1.26.0
+    - streamlit-extras==0.2.7
     - snowflake-cli-labs==2.1.2

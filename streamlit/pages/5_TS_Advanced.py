@@ -24,6 +24,7 @@ query_profile = ['Raw','Downsample', 'Binning']
 
 st.sidebar.markdown('## Tag Selection')
 taglist = st.sidebar.multiselect('Select Tag Names', df_tags)
+filter = (*taglist, "", "")
 
 # Set time range
 st.sidebar.markdown('## Time Selection (UTC)')
@@ -51,11 +52,6 @@ AND TAGNAME IN {taglist}
 CROSS JOIN TABLE(FUNCTION_TS_LTTB(DATE_PART(EPOCH_NANOSECOND, DATA.TIMESTAMP), DATA.VALUE, 100) OVER (PARTITION BY DATA.TAGNAME ORDER BY DATA.TIMESTAMP)) AS LTTB
 ORDER BY TAGNAME, TIMESTAMP'''
 
-st.write(taglist)
-filter = (*taglist, "", "")
-st.write(str(tuple(filter)))
-st.write(query_str)
-
 # TS dataframe with query variables
 df_data = session.sql(
     query_str \
@@ -66,9 +62,16 @@ df_data = session.sql(
 # Create chart plot
 with st.container():
     st.subheader('Tag Data')
-    alt_chart_1 = alt.Chart(df_data.to_pandas()).mark_line().encode(x="TIMESTAMP",y="VALUE")
+    alt_chart_1 = alt.Chart(df_data.to_pandas()).mark_line().encode(x="TIMESTAMP", y="VALUE", color="TAGNAME").interactive()
     st.altair_chart(alt_chart_1, use_container_width=True)
     # fig = px.line(df_data, x='TIMESTAMP', y='VALUE_NUMERIC', color='TAGNAME')
     # st.plotly_chart(fig, use_container_width=True, render='svg')
 
     st.table(df_data.collect())
+
+with st.expander("Supporting Detail", expanded=False):
+    st.write(taglist)
+    st.write(str(tuple(filter)))
+    st.write(query_str)
+    st.write(start_ts)
+    st.write(end_ts)
