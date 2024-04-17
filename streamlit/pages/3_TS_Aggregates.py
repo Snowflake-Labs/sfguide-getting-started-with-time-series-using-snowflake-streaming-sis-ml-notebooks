@@ -13,7 +13,7 @@ import json
 
 # Set page config
 st.set_page_config(layout="wide")
-st.title('Time Series - Statistical Queries')
+st.title('Time Series - Aggregates')
 
 # Get current session
 session = get_active_session()
@@ -38,6 +38,7 @@ if taglist:
 else:
     df_tag_metadata = pd.DataFrame(columns=['TAGNAME', 'TAGUNITS', 'TAGDATATYPE'])
 
+st.subheader('Tag Metadata')
 st.dataframe(df_tag_metadata, hide_index=True, use_container_width=True)
 
 # Set time range
@@ -102,7 +103,6 @@ selected_tag = taglist[0] if taglist else '/IOT/SENSOR/100'
 
 # Create chart plot
 with st.container():
-    st.subheader('Tag Data')
     alt_chart_1 = alt.Chart(df_data.to_pandas()).mark_line().encode(x="TIMESTAMP", y="VALUE", color="TAGNAME").interactive()
     st.altair_chart(alt_chart_1, use_container_width=True)
     # fig = px.line(df_data, x='TIMESTAMP', y='VALUE_NUMERIC', color='TAGNAME')

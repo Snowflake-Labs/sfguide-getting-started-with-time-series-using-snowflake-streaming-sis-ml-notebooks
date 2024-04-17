@@ -12,7 +12,7 @@ import datetime
 
 # Set page config
 st.set_page_config(layout="wide")
-st.title('Time Series - Binning Queries')
+st.title('Time Series - Binning')
 
 # Get current session
 session = get_active_session()
@@ -82,14 +82,15 @@ label_position = st.sidebar.radio('Label Position', ['Start', 'End'], index=1, h
 query_str = '''
 SELECT DATA.TAGNAME, LTTB.TIMESTAMP::VARCHAR::TIMESTAMP_NTZ AS TIMESTAMP, LTTB.VALUE::FLOAT AS VALUE
 FROM (
-SELECT TAGNAME, TIMESTAMP, VALUE_NUMERIC AS VALUE
+SELECT TAGNAME, TIME_SLICE(DATEADD(MILLISECOND, -1, TIMESTAMP), {bin_range}, '{interval_unit}', '{label_position}') AS TIMESTAMP, AVG(VALUE_NUMERIC) AS AVG_VALUE
 FROM TS_TAG_READINGS
-WHERE TIMESTAMP >= TIMESTAMP '{start_ts}'
-AND TIMESTAMP < TIMESTAMP '{end_ts}'
-AND TAGNAME IN {taglist}
+WHERE TIMESTAMP >= '{start_ts}' AND TIMESTAMP < '{end_ts}' AND TAGNAME IN {tag_tuple}
+GROUP BY TAGNAME, TIME_SLICE(DATEADD(MILLISECOND, -1, TIMESTAMP), {bin_range}, '{interval_unit}', '{label_position}')
+ORDER BY TAGNAME, TIMESTAMP
 ) AS DATA
 CROSS JOIN TABLE(FUNCTION_TS_LTTB(DATE_PART(EPOCH_NANOSECOND, DATA.TIMESTAMP), DATA.VALUE, 100) OVER (PARTITION BY DATA.TAGNAME ORDER BY DATA.TIMESTAMP)) AS LTTB
-ORDER BY TAGNAME, TIMESTAMP'''
+ORDER BY TAGNAME, TIMESTAMP
+'''
 
 # Generate a SQL-compatible tuple from the tag list
 tag_tuple = str(tuple(taglist)) if len(taglist) > 1 else f"('{taglist[0]}')" if taglist else "()"

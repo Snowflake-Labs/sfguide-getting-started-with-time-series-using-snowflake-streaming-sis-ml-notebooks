@@ -26,13 +26,13 @@ class lttb_run:
     @vectorized(input=pd.DataFrame)
 
     def end_partition(self, df):
-        if df.SIZE.iloc[0] >= len(df.index):
+        if df.SIZE.iat[0] >= len(df.index):
             return df[['TIMESTAMP','VALUE']]
         else:
             idx = LTTB_core_py.downsample(
                 df.TIMESTAMP.to_numpy(),
                 df.VALUE.to_numpy(),
-                n_out=df.SIZE.iloc[0]
+                n_out=df.SIZE.iat[0]
             )
             return df[['TIMESTAMP','VALUE']].iloc[idx]
 $$;

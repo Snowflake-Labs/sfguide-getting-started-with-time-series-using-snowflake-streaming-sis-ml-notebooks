@@ -1,23 +1,3 @@
--- Login as ACCOUNTADMIN
-USE ROLE ACCOUNTADMIN;
-
--- Find your account details
-SELECT SYSTEM$ALLOWLIST();
-
-/* EXTERNAL ACTIVITY
-
-Use the system$allowlist() command to find your Snowflake hostname and deployment detail
-
-NOTE: We'll only require the account locator and cloud region portion of the host: <account_locator>.<cloud_region_id>.snowflakecomputing.com
-For example if your host is xy12345.us-east-2.aws.snowflakecomputing.com then only copy xy12345.us-east-1
-
-Use the copied host information to update the deployment variable in the following files of your forked QuickStart repo:
-
-.snowlfake/config.toml - update <SNOWFLAKE_DEPLOYMENT> for both connections account parameter
-iotstream/snowflake.properties - update <SNOWFLAKE_DEPLOYMENT> for account and host parameter
-
-*/
-
 -- Setup HOL role and user
 USE ROLE ACCOUNTADMIN;
 CREATE ROLE IF NOT EXISTS ROLE_HOL_TIMESERIES;

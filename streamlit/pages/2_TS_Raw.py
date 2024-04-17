@@ -12,7 +12,7 @@ import datetime
 
 # Set page config
 st.set_page_config(layout="wide")
-st.title('Time Series - Raw Queries')
+st.title('Time Series - Raw')
 
 # Get current session
 session = get_active_session()
