@@ -13,10 +13,9 @@ Retrieve the public key detail and replace <RSA_PUBLIC_KEY> with the contents of
 excluding the -----BEGIN PUBLIC KEY----- and -----END PUBLIC KEY----- lines
 
 */
+
 -- Set user public key
 ALTER USER USER_HOL_TIMESERIES SET RSA_PUBLIC_KEY='<RSA_PUBLIC_KEY>';
-
-SHOW ROLES;
 
 -- Setup HOL infrastructure objects
 USE ROLE SYSADMIN;
