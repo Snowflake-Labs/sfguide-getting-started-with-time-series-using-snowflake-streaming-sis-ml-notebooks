@@ -9,9 +9,6 @@ import plotly.express as px
 import streamlit as st
 import pandas as pd
 import datetime
-import contextlib
-import textwrap
-import traceback
 
 # Set page config
 st.set_page_config(layout="wide")
@@ -50,8 +47,8 @@ st.dataframe(df_tag_metadata, hide_index=True, use_container_width=True)
 
 # Set time range
 st.sidebar.markdown('## Time Selection (UTC)')
-start_date = st.sidebar.date_input('Start Date', datetime.datetime.now(datetime.timezone.utc) - timedelta(hours=8), datetime.date(2024, 1, 1), datetime.date(2030, 12, 31))
-end_date = st.sidebar.date_input('End Date', datetime.datetime.now(datetime.timezone.utc), datetime.date(2024, 1, 1), datetime.date(2030, 12, 31))
+start_date = st.sidebar.date_input('Start Date', datetime.datetime.now(datetime.timezone.utc) - timedelta(hours=8), datetime.date(1995, 1, 1), datetime.date(2030, 12, 31))
+end_date = st.sidebar.date_input('End Date', datetime.datetime.now(datetime.timezone.utc), datetime.date(1995, 1, 1), datetime.date(2030, 12, 31))
 current_hour = int(datetime.datetime.now(datetime.timezone.utc).strftime("%H"))
 current_minute = int(datetime.datetime.now(datetime.timezone.utc).strftime("%M"))
 start_hour = (current_hour - 8) % 24
@@ -65,25 +62,13 @@ start_time, end_time = st.sidebar.slider(
 )
 
 # Chart sampling
-sample = st.sidebar.slider('Chart Sample', 100, 1000, 500)
+sample = st.sidebar.slider('Chart Sample', 100, 1000, 1000)
 
 # Combine start and end date time components
 start_ts = datetime.datetime.combine(start_date, start_time)
 end_ts = datetime.datetime.combine(end_date, end_time)
 
-# TS Query Builder
-chart_query_str = '''
-SELECT DATA.TAGNAME, LTTB.TIMESTAMP::VARCHAR::TIMESTAMP_NTZ AS TIMESTAMP, LTTB.VALUE::FLOAT AS VALUE
-FROM (
-SELECT TAGNAME, TIMESTAMP, VALUE_NUMERIC AS VALUE
-FROM TS_TAG_READINGS
-WHERE TIMESTAMP >= TIMESTAMP '{start_ts}'
-AND TIMESTAMP < TIMESTAMP '{end_ts}'
-AND TAGNAME IN {taglist}
-) AS DATA
-CROSS JOIN TABLE(FUNCTION_TS_LTTB(DATE_PART(EPOCH_NANOSECOND, DATA.TIMESTAMP), DATA.VALUE, {sample}) OVER (PARTITION BY DATA.TAGNAME ORDER BY DATA.TIMESTAMP)) AS LTTB
-ORDER BY TAGNAME, TIMESTAMP'''
-
+# TS Table Query Builder
 table_query_str = '''
 SELECT TAGNAME, TIMESTAMP, VALUE_NUMERIC AS VALUE
 FROM TS_TAG_READINGS
@@ -93,15 +78,16 @@ AND TAGNAME IN {taglist}
 ORDER BY TAGNAME, TIMESTAMP
 '''
 
-# TS dataframe with query variables
-df_chart_data = session.sql(
-    chart_query_str \
-        .replace("{start_ts}", str(start_ts)) \
-        .replace("{end_ts}", str(end_ts)) \
-        .replace("{taglist}", str(tuple(filter))) \
-        .replace("{sample}", str(sample)) \
-        )
 
+chart_query_str = '''
+SELECT DATA.TAGNAME, LTTB.TIMESTAMP::VARCHAR::TIMESTAMP_NTZ AS TIMESTAMP, LTTB.VALUE::FLOAT AS VALUE
+FROM (
+{table_query}
+) AS DATA
+CROSS JOIN TABLE(FUNCTION_TS_LTTB(DATE_PART(EPOCH_NANOSECOND, DATA.TIMESTAMP), DATA.VALUE, {sample}) OVER (PARTITION BY DATA.TAGNAME ORDER BY DATA.TIMESTAMP)) AS LTTB
+ORDER BY TAGNAME, TIMESTAMP'''
+
+# TS dataframe with query variables
 df_table_data = session.sql(
     table_query_str \
         .replace("{start_ts}", str(start_ts)) \
@@ -109,12 +95,23 @@ df_table_data = session.sql(
         .replace("{taglist}", str(tuple(filter)))
         )
 
+df_chart_data = session.sql(
+    chart_query_str \
+        .replace("{table_query}", str( \
+            table_query_str \
+                .replace("{start_ts}", str(start_ts)) \
+                .replace("{end_ts}", str(end_ts)) \
+                .replace("{taglist}", str(tuple(filter))) \
+        ))
+        .replace("{sample}", str(sample)) \
+        )
+
 # Create chart plot
 with st.container():
-    alt_chart_1 = alt.Chart(df_chart_data.to_pandas()).mark_line().encode(x="TIMESTAMP", y="VALUE", color="TAGNAME").interactive()
+    alt_chart_1 = alt.Chart(df_chart_data.to_pandas()).mark_line().encode(x=alt.X("utcyearmonthdatehoursminutesseconds(TIMESTAMP):O"), y="VALUE", color="TAGNAME").interactive()
     st.altair_chart(alt_chart_1, use_container_width=True)
-    # fig = px.line(df_data, x='TIMESTAMP', y='VALUE_NUMERIC', color='TAGNAME')
-    # st.plotly_chart(fig, use_container_width=True, render='svg')
+    # fig = px.line(df_chart_data.to_pandas(), x='TIMESTAMP', y='VALUE', color='TAGNAME')
+    # st.plotly_chart(fig, use_container_width=True, render='webgl')
 
     st.subheader('Tag Data')
 

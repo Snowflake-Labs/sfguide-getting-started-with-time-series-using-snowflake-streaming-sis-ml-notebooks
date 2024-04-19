@@ -43,8 +43,8 @@ st.dataframe(df_tag_metadata, hide_index=True, use_container_width=True)
 
 # Set time range
 st.sidebar.markdown('## Time Selection (UTC)')
-start_date = st.sidebar.date_input('Start Date', datetime.datetime.now(datetime.timezone.utc) - timedelta(hours=8), datetime.date(2024, 1, 1), datetime.date(2030, 12, 31))
-end_date = st.sidebar.date_input('End Date', datetime.datetime.now(datetime.timezone.utc), datetime.date(2024, 1, 1), datetime.date(2030, 12, 31))
+start_date = st.sidebar.date_input('Start Date', datetime.datetime.now(datetime.timezone.utc) - timedelta(hours=8), datetime.date(1995, 1, 1), datetime.date(2030, 12, 31))
+end_date = st.sidebar.date_input('End Date', datetime.datetime.now(datetime.timezone.utc), datetime.date(1995, 1, 1), datetime.date(2030, 12, 31))
 # change logic to use modulo to ensure hour is between 0 and 23  
 current_hour = int(datetime.datetime.now(datetime.timezone.utc).strftime("%H"))
 current_minute = int(datetime.datetime.now(datetime.timezone.utc).strftime("%M"))
@@ -58,12 +58,14 @@ start_time, end_time = st.sidebar.slider(
     )
 )
 
-# Chart sampling
-sample = st.sidebar.slider('Chart Sample', 100, 1000, 500)
-
 # Combine start and end date time components
 start_ts = datetime.datetime.combine(start_date, start_time)
 end_ts = datetime.datetime.combine(end_date, end_time)
+
+# Chart sampling
+sample = st.sidebar.slider('Chart Sample', 100, 1000, 500)
+
+
 
 # TS Query Builder
 query_str = '''
@@ -78,6 +80,15 @@ AND TAGNAME IN {taglist}
 CROSS JOIN TABLE(FUNCTION_TS_LTTB(DATE_PART(EPOCH_NANOSECOND, DATA.TIMESTAMP), DATA.VALUE, 100) OVER (PARTITION BY DATA.TAGNAME ORDER BY DATA.TIMESTAMP)) AS LTTB
 ORDER BY TAGNAME, TIMESTAMP'''
 
+# Stats queries
+stat_queries = {
+    'Average': "SELECT AVG(VALUE_NUMERIC) AS Average FROM TS_TAG_READINGS WHERE TIMESTAMP >= '{start_ts}' AND TIMESTAMP < '{end_ts}' AND TAGNAME = '{tag}'",
+    'Count': "SELECT COUNT(VALUE) AS Count FROM TS_TAG_READINGS WHERE TIMESTAMP >= '{start_ts}' AND TIMESTAMP < '{end_ts}' AND TAGNAME = '{tag}'",
+    'Count Distinct': "SELECT COUNT(DISTINCT VALUE) AS Count_Distinct FROM TS_TAG_READINGS WHERE TIMESTAMP >= '{start_ts}' AND TIMESTAMP < '{end_ts}' AND TAGNAME = '{tag}'",
+    'Standard Deviation': "SELECT STDDEV(VALUE_NUMERIC) AS VALUE FROM TS_TAG_READINGS WHERE TIMESTAMP >= '{start_ts}' AND TIMESTAMP < '{end_ts}' AND TAGNAME = '{tag}'",
+    'Variance': "SELECT VARIANCE(VALUE_NUMERIC) AS VALUE FROM TS_TAG_READINGS WHERE TIMESTAMP >= '{start_ts}' AND TIMESTAMP < '{end_ts}' AND TAGNAME = '{tag}'"
+}
+
 # TS dataframe with query variables
 df_data = session.sql(
     query_str \
@@ -88,18 +99,8 @@ df_data = session.sql(
 
 
 
-# Define stats queries
-stat_queries = {
-    'Average': "SELECT AVG(VALUE_NUMERIC) AS Average FROM TS_TAG_READINGS WHERE TIMESTAMP >= '{start_ts}' AND TIMESTAMP < '{end_ts}' AND TAGNAME = '{tag}'",
-    'Count': "SELECT COUNT(VALUE) AS Count FROM TS_TAG_READINGS WHERE TIMESTAMP >= '{start_ts}' AND TIMESTAMP < '{end_ts}' AND TAGNAME = '{tag}'",
-    'Count Distinct': "SELECT COUNT(DISTINCT VALUE) AS Count_Distinct FROM TS_TAG_READINGS WHERE TIMESTAMP >= '{start_ts}' AND TIMESTAMP < '{end_ts}' AND TAGNAME = '{tag}'",
-    'Standard Deviation': "SELECT STDDEV(VALUE_NUMERIC) AS VALUE FROM TS_TAG_READINGS WHERE TIMESTAMP >= '{start_ts}' AND TIMESTAMP < '{end_ts}' AND TAGNAME = '{tag}'",
-    'Variance': "SELECT VARIANCE(VALUE_NUMERIC) AS VALUE FROM TS_TAG_READINGS WHERE TIMESTAMP >= '{start_ts}' AND TIMESTAMP < '{end_ts}' AND TAGNAME = '{tag}'"
-}
-
 # Select default tag
 selected_tag = taglist[0] if taglist else '/IOT/SENSOR/100' 
-
 
 # Create chart plot
 with st.container():
@@ -113,13 +114,24 @@ with st.container():
 # Display all metrics in a container
 with st.container():
     st.write("Statistical Metrics:")
+    columns = st.columns(len(stat_queries))  
+    metrics = []
+    
     for name, query in stat_queries.items():
-        result = session.sql(query.format(start_ts=start_ts, end_ts=end_ts, tag=selected_tag)).collect()[0][0]
-        st.metric(label=name, value=result)
+        formatted_query = query.format(start_ts=start_ts, 
+                                       end_ts=end_ts, 
+                                       tag=selected_tag)
+        result = session.sql(formatted_query).collect()[0][0]
+        if isinstance(result, float):  
+            result = round(result, 2)  
+        metrics.append((name, result))
+    
+    for col, metric in zip(columns, metrics):
+        col.metric(label=metric[0], value=metric[1])
 
 with st.expander("Supporting Detail", expanded=False):
     st.write(taglist)
     st.write(str(tuple(filter)))
-    st.write(query_str)
+    st.write(stat_queries)
     st.write(start_ts)
     st.write(end_ts)
