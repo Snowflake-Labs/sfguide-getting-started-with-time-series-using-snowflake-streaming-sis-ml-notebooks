@@ -42,9 +42,6 @@ if taglist:
 else:
     df_tag_metadata = pd.DataFrame(columns=['TAGNAME', 'TAGUNITS', 'TAGDATATYPE'])
 
-st.subheader('Tag Metadata')
-st.dataframe(df_tag_metadata, hide_index=True, use_container_width=True)
-
 # Set time range
 st.sidebar.markdown('## Time Selection (UTC)')
 start_date = st.sidebar.date_input('Start Date', datetime.datetime.now(datetime.timezone.utc) - timedelta(hours=8), datetime.date(1995, 1, 1), datetime.date(2030, 12, 31))
@@ -62,7 +59,7 @@ start_time, end_time = st.sidebar.slider(
 )
 
 # Chart sampling
-sample = st.sidebar.slider('Chart Sample', 100, 1000, 1000)
+sample = st.sidebar.slider('Chart Sample', 100, 5000, 5000)
 
 # Combine start and end date time components
 start_ts = datetime.datetime.combine(start_date, start_time)
@@ -77,7 +74,6 @@ AND TIMESTAMP < TIMESTAMP '{end_ts}'
 AND TAGNAME IN {taglist}
 ORDER BY TAGNAME, TIMESTAMP
 '''
-
 
 chart_query_str = '''
 SELECT DATA.TAGNAME, LTTB.TIMESTAMP::VARCHAR::TIMESTAMP_NTZ AS TIMESTAMP, LTTB.VALUE::FLOAT AS VALUE
@@ -108,19 +104,22 @@ df_chart_data = session.sql(
 
 # Create chart plot
 with st.container():
-    alt_chart_1 = alt.Chart(df_chart_data.to_pandas()).mark_line().encode(x=alt.X("utcyearmonthdatehoursminutesseconds(TIMESTAMP):O"), y="VALUE", color="TAGNAME").interactive()
+    st.subheader('Tag Metadata')
+    st.dataframe(df_tag_metadata, hide_index=True, use_container_width=True)
+
+    alt_chart_1 = alt.Chart(df_chart_data.to_pandas()).mark_line().encode(
+        alt.X(field="TIMESTAMP", timeUnit="utcyearmonthdatehoursminutesseconds", type="ordinal", title="TIMESTAMP"),
+        alt.Y("VALUE"),
+        alt.Color("TAGNAME")
+    ).interactive()
     st.altair_chart(alt_chart_1, use_container_width=True)
-    # fig = px.line(df_chart_data.to_pandas(), x='TIMESTAMP', y='VALUE', color='TAGNAME')
-    # st.plotly_chart(fig, use_container_width=True, render='webgl')
 
     st.subheader('Tag Data')
-
     rows_choices = [100, 1000, 10000, 100000]
     rows = st.selectbox('Select the number of rows to retrieve:', options=rows_choices)
-    
     st.dataframe(df_table_data.limit(rows).collect(), hide_index=True, use_container_width=True)
 
-with st.expander("📥 Download as CSV", expanded=False):
+with st.expander("📥 Download as CSV - " + str(df_table_data.count()) + " rows", expanded=False):
     if st.button("Get download link"):
         st.write("Generating url...")
         
@@ -152,8 +151,9 @@ with st.expander("📥 Download as CSV", expanded=False):
 
 with st.expander("Supporting Detail", expanded=False):
     st.subheader('Query:')
-    st.write(table_query_str \
+    st.code(table_query_str \
         .replace("{start_ts}", str(start_ts)) \
         .replace("{end_ts}", str(end_ts)) \
-        .replace("{taglist}", str(tuple(filter)))
+        .replace("{taglist}", str(tuple(filter))),
+        language='sql'
         )
