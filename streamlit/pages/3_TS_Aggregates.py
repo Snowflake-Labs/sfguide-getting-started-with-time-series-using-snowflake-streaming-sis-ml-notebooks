@@ -81,21 +81,29 @@ if taglist:
         st.subheader('Tag Metadata')
         st.dataframe(df_tag_metadata, hide_index=True, use_container_width=True)
 
-        st.subheader("Statistical Metrics:")
-        columns = st.columns(len(stat_queries))  
         metrics = []
         
         for name, query in stat_queries.items():
             formatted_query = query.format(start_ts=start_ts, 
                                         end_ts=end_ts,
                                         tag=taglist)
-            result = session.sql(formatted_query).collect()[0][0]
+            try:
+                result = session.sql(formatted_query).collect()[0][2]
+            except:
+                continue
+
             if isinstance(result, float):
                 result = round(result, 2)
             metrics.append((name, result))
-        
-        for col, metric in zip(columns, metrics):
-            col.metric(label=metric[0], value=metric[1])
+
+        if len(metrics) > 0:
+            st.subheader("Statistical Metrics:")
+            columns = st.columns(len(stat_queries))  
+
+            for col, metric in zip(columns, metrics):
+                col.metric(label=metric[0], value=metric[1])
+        else:
+            st.write("❄️ No data for selection.")
 
 if taglist:
     with st.expander("🔍 Supporting Detail", expanded=False):
