@@ -88,13 +88,13 @@ end_ts = datetime.datetime.combine(end_date, end_time)
 
 # Stats queries
 stat_queries = {
-    'Average': "SELECT TAGNAME, TO_TIMESTAMP('{end_ts}') AS TIMESTAMP, AVG(VALUE_NUMERIC) AS VALUE FROM TS_TAG_READINGS WHERE TIMESTAMP >= '{start_ts}' AND TIMESTAMP < '{end_ts}' AND TAGNAME = '{tag}' GROUP BY TAGNAME",
-    'Count': "SELECT TAGNAME, TO_TIMESTAMP('{end_ts}') AS TIMESTAMP, COUNT(VALUE) AS VALUE FROM TS_TAG_READINGS WHERE TIMESTAMP >= '{start_ts}' AND TIMESTAMP < '{end_ts}' AND TAGNAME = '{tag}' GROUP BY TAGNAME",
-    'Count Distinct': "SELECT TAGNAME, TO_TIMESTAMP('{end_ts}') AS TIMESTAMP, COUNT(DISTINCT VALUE) AS VALUE FROM TS_TAG_READINGS WHERE TIMESTAMP >= '{start_ts}' AND TIMESTAMP < '{end_ts}' AND TAGNAME = '{tag}' GROUP BY TAGNAME",
-    'Standard Deviation': "SELECT TAGNAME, TO_TIMESTAMP('{end_ts}') AS TIMESTAMP, STDDEV(VALUE_NUMERIC) AS VALUE FROM TS_TAG_READINGS WHERE TIMESTAMP >= '{start_ts}' AND TIMESTAMP < '{end_ts}' AND TAGNAME = '{tag}' GROUP BY TAGNAME",
-    'Variance': "SELECT TAGNAME, TO_TIMESTAMP('{end_ts}') AS TIMESTAMP, VARIANCE(VALUE_NUMERIC) AS VALUE FROM TS_TAG_READINGS WHERE TIMESTAMP >= '{start_ts}' AND TIMESTAMP < '{end_ts}' AND TAGNAME = '{tag}' GROUP BY TAGNAME",
-    '50th Percentile': "SELECT TAGNAME, TO_TIMESTAMP('{end_ts}') AS TIMESTAMP, APPROX_PERCENTILE(VALUE_NUMERIC, 0.5) AS VALUE FROM TS_TAG_READINGS WHERE TIMESTAMP >= '{start_ts}' AND TIMESTAMP < '{end_ts}' AND TAGNAME = '{tag}' GROUP BY TAGNAME",
-    '95th Percentile': "SELECT TAGNAME, TO_TIMESTAMP('{end_ts}') AS TIMESTAMP, APPROX_PERCENTILE(VALUE_NUMERIC, 0.95) AS VALUE FROM TS_TAG_READINGS WHERE TIMESTAMP >= '{start_ts}' AND TIMESTAMP < '{end_ts}' AND TAGNAME = '{tag}' GROUP BY TAGNAME",
+    'Average': "SELECT TAGNAME, TO_TIMESTAMP('{end_ts}') AS TIMESTAMP, AVG(VALUE_NUMERIC) AS VALUE FROM TS_TAG_READINGS WHERE TIMESTAMP >= '{start_ts}' AND TIMESTAMP < '{end_ts}' AND TAGNAME IN {tag_tuple} GROUP BY TAGNAME",
+    'Count': "SELECT TAGNAME, TO_TIMESTAMP('{end_ts}') AS TIMESTAMP, COUNT(VALUE) AS VALUE FROM TS_TAG_READINGS WHERE TIMESTAMP >= '{start_ts}' AND TIMESTAMP < '{end_ts}' AND TAGNAME IN {tag_tuple} GROUP BY TAGNAME",
+    'Count Distinct': "SELECT TAGNAME, TO_TIMESTAMP('{end_ts}') AS TIMESTAMP, COUNT(DISTINCT VALUE) AS VALUE FROM TS_TAG_READINGS WHERE TIMESTAMP >= '{start_ts}' AND TIMESTAMP < '{end_ts}' AND TAGNAME IN {tag_tuple} GROUP BY TAGNAME",
+    'Standard Deviation': "SELECT TAGNAME, TO_TIMESTAMP('{end_ts}') AS TIMESTAMP, STDDEV(VALUE_NUMERIC) AS VALUE FROM TS_TAG_READINGS WHERE TIMESTAMP >= '{start_ts}' AND TIMESTAMP < '{end_ts}' AND TAGNAME IN {tag_tuple} GROUP BY TAGNAME",
+    'Variance': "SELECT TAGNAME, TO_TIMESTAMP('{end_ts}') AS TIMESTAMP, VARIANCE(VALUE_NUMERIC) AS VALUE FROM TS_TAG_READINGS WHERE TIMESTAMP >= '{start_ts}' AND TIMESTAMP < '{end_ts}' AND TAGNAME IN {tag_tuple} GROUP BY TAGNAME",
+    '50th Percentile': "SELECT TAGNAME, TO_TIMESTAMP('{end_ts}') AS TIMESTAMP, APPROX_PERCENTILE(VALUE_NUMERIC, 0.5) AS VALUE FROM TS_TAG_READINGS WHERE TIMESTAMP >= '{start_ts}' AND TIMESTAMP < '{end_ts}' AND TAGNAME IN {tag_tuple} GROUP BY TAGNAME",
+    '95th Percentile': "SELECT TAGNAME, TO_TIMESTAMP('{end_ts}') AS TIMESTAMP, APPROX_PERCENTILE(VALUE_NUMERIC, 0.95) AS VALUE FROM TS_TAG_READINGS WHERE TIMESTAMP >= '{start_ts}' AND TIMESTAMP < '{end_ts}' AND TAGNAME IN {tag_tuple} GROUP BY TAGNAME",
 }
 
 # Display all metrics in a container
@@ -108,7 +108,7 @@ if taglist:
         for name, query in stat_queries.items():
             formatted_query = query.format(start_ts=start_ts, 
                                         end_ts=end_ts,
-                                        tag=taglist)
+                                        tag_tuple=tag_tuple)
             try:
                 result = session.sql(formatted_query).collect()[0][2]
             except:
