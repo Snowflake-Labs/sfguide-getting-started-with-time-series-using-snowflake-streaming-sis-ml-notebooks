@@ -11,31 +11,45 @@ import streamlit as st
 import pandas as pd
 import datetime
 
-# Set page config
-st.set_page_config(layout="wide")
-st.title('Time Series - Raw')
-
 # Get current session
 session = get_active_session()
+
+# Set page config
+st.set_page_config(page_title="Time Series - Raw", layout="wide")
 
 # Setup session state variables
 if "times_refreshed" not in st.session_state:
     st.session_state["times_refreshed"] = 0
+if "selected_tag" not in st.session_state:
+    st.session_state["selected_tag"] = []
+if "start_date" not in st.session_state:
+    st.session_state["start_date"] = datetime.datetime.now(datetime.timezone.utc) - timedelta(hours=1)
+if "start_time" not in st.session_state:
+    st.session_state["start_time"] = datetime.datetime.now(datetime.timezone.utc) - timedelta(hours=1)
+if "end_date" not in st.session_state:
+    st.session_state["end_date"] = datetime.datetime.now(datetime.timezone.utc) + timedelta(hours=1)
+if "end_time" not in st.session_state:
+    st.session_state["end_time"] = datetime.datetime.now(datetime.timezone.utc) + timedelta(hours=1)
+if "sample" not in st.session_state:
+    st.session_state["sample"] = 500
+
+# Page title
+st.title('Time Series - Raw')
 
 # Get a list of all tags
 df_tags = session.table('TS_TAG_REFERENCE').select(F.col('TAGNAME')).sort(F.col('TAGNAME')).toPandas()
 
 st.sidebar.markdown('## Tag Selection')
-taglist = st.sidebar.multiselect('Select Tag Names', df_tags)
+taglist = st.sidebar.multiselect('Select Tag Names', df_tags, default=st.session_state["selected_tag"])
 filter = (*taglist, "", "")
 
-# Correct way to handle the SQL tuple for taglist
+# Handle the SQL tuple for taglist
 if len(taglist) == 1:
     tag_tuple = f"('{taglist[0]}')"
 elif taglist:
     tag_tuple = str(tuple(taglist))
 else:
-    tag_tuple = "('')"  # Default or error case handling: no tags selected
+    tag_tuple = "('')"
 
 # Fetch tag metadata for selected tags 
 if taglist:
@@ -49,29 +63,25 @@ else:
 
 # Set time range
 st.sidebar.markdown('## Time Selection (UTC)')
-start_date = st.sidebar.date_input('Start Date', datetime.datetime.now(datetime.timezone.utc) - timedelta(hours=1), datetime.date(1995, 1, 1), datetime.date(2030, 12, 31))
-start_time = st.sidebar.time_input('Start Time', datetime.datetime.now(datetime.timezone.utc) - timedelta(hours=1))
-end_date = st.sidebar.date_input('End Date', datetime.datetime.now(datetime.timezone.utc) + timedelta(hours=1), datetime.date(1995, 1, 1), datetime.date(2030, 12, 31))
-end_time = st.sidebar.time_input('End Time', datetime.datetime.now(datetime.timezone.utc) + timedelta(hours=1))
-
-# current_hour = int(datetime.datetime.now(datetime.timezone.utc).strftime("%H"))
-# current_minute = int(datetime.datetime.now(datetime.timezone.utc).strftime("%M"))
-# start_hour = (current_hour - 8) % 24
-
-# start_time, end_time = st.sidebar.slider(
-#     "Time range",
-#     value=(
-#         datetime.time(start_hour, current_minute),
-#         datetime.time(current_hour, current_minute)
-#     )
-# )
+start_date = st.sidebar.date_input('Start Date', st.session_state["start_date"], datetime.date(1995, 1, 1), datetime.date(2030, 12, 31))
+start_time = st.sidebar.time_input('Start Time', st.session_state["start_time"])
+end_date = st.sidebar.date_input('End Date', st.session_state["end_date"], datetime.date(1995, 1, 1), datetime.date(2030, 12, 31))
+end_time = st.sidebar.time_input('End Time', st.session_state["end_time"])
 
 # Combine start and end date time components
 start_ts = datetime.datetime.combine(start_date, start_time)
 end_ts = datetime.datetime.combine(end_date, end_time)
 
 # Chart sampling
-sample = st.sidebar.slider('Chart Sample', 100, 5000, 500)
+sample = st.sidebar.slider('Chart Sample', 100, 5000, st.session_state["sample"])
+
+# Update session state
+st.session_state["selected_tag"] = taglist
+st.session_state["start_date"] = start_date
+st.session_state["start_time"] = start_time
+st.session_state["end_date"] = end_date
+st.session_state["end_time"] = end_time
+st.session_state["sample"] = sample
 
 # TS Table Query Builder
 table_query_str = '''
@@ -116,11 +126,18 @@ if taglist:
         st.subheader('Tag Metadata')
         st.dataframe(df_tag_metadata, hide_index=True, use_container_width=True)
 
-        alt_chart_1 = alt.Chart(df_chart_data.to_pandas()).mark_line().encode(
-            alt.X("utcyearmonthdatehoursminutesseconds(TIMESTAMP):T", title="TIMESTAMP", axis=alt.Axis(format='%Y-%m-%d %H:%M')),
-            alt.Y("VALUE"),
-            alt.Color("TAGNAME")
-        ).interactive()
+        alt_chart_1 = (
+            alt.Chart(df_chart_data.to_pandas())
+                .mark_line(point=False, interpolate="linear")
+                .encode(
+                    x=alt.X("utcyearmonthdatehoursminutesseconds(TIMESTAMP):T", title="TIMESTAMP", axis=alt.Axis(format='%Y-%m-%d %H:%M')),
+                    y=alt.Y("VALUE"),
+                    color=alt.Color("TAGNAME"),
+                    order="TIMESTAMP",
+                    #text=alt.Text("TOTAL_COST:Q", format=",.0f"),
+                )
+                .interactive()
+        )
         st.altair_chart(alt_chart_1, use_container_width=True)
 
         st.subheader('Tag Data')

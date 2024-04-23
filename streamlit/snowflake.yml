@@ -6,3 +6,6 @@ streamlit:
   main_file: streamlit/1_TS_Home.py
   env_file: streamlit/environment.yml
   pages_dir: streamlit/pages/
+  additional_source_files:
+    - streamlit/common/snowflake.png
+    - streamlit/common/snowflakelogo.png
