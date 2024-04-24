@@ -15,9 +15,6 @@ import json
 # Get current session
 session = get_active_session()
 
-# Get current session
-session = get_active_session()
-
 # Set page config
 st.set_page_config(page_title="Time Series - Aggregates", layout="wide")
 
@@ -64,9 +61,6 @@ if taglist:
     df_tag_metadata = session.sql(query).toPandas()
 else:
     df_tag_metadata = pd.DataFrame(columns=['TAGNAME', 'TAGUNITS', 'TAGDATATYPE', 'TAGDESCRIPTION'])
-
-# Update session state
-st.session_state["selected_tag"] = taglist
 
 # Set time range
 st.sidebar.markdown('## Time Selection (UTC)')
@@ -132,7 +126,7 @@ if taglist:
         for name, query in stat_queries.items():
             formatted_query = query.format(start_ts=start_ts, 
                                         end_ts=end_ts,
-                                        tag=taglist)
+                                        tag_tuple=tag_tuple)
             st.subheader(name + " Query:")
             st.code(formatted_query, language="sql")
 

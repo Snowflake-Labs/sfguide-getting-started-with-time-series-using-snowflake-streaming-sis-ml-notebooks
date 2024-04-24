@@ -61,9 +61,6 @@ if taglist:
 else:
     df_tag_metadata = pd.DataFrame(columns=['TAGNAME', 'TAGUNITS', 'TAGDATATYPE', 'TAGDESCRIPTION'])
 
-# Update session state
-st.session_state["selected_tag"] = taglist
-
 # Set time range
 st.sidebar.markdown('## Time Selection (UTC)')
 start_date = st.sidebar.date_input('Start Date', st.session_state["start_date"], datetime.date(1995, 1, 1), datetime.date(2030, 12, 31))
