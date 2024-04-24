@@ -96,30 +96,34 @@ if taglist:
     with st.container():
         st.subheader('Tag Metadata')
         st.dataframe(df_tag_metadata, hide_index=True, use_container_width=True)
+        # Iterate over each tag and fetch metrics
+        st.subheader(f"Statistical Metrics:")
+        st.markdown(f"##### Timestamp: {end_ts}")
+        for tag in taglist:
+            
+            
+            metrics = []
 
-        metrics = []
-        
-        for name, query in stat_queries.items():
-            formatted_query = query.format(start_ts=start_ts, 
-                                        end_ts=end_ts,
-                                        tag_tuple=tag_tuple)
-            try:
-                result = session.sql(formatted_query).collect()[0][2]
-            except:
-                continue
+            for name, query in stat_queries.items():
+                # Format the query for the current tag
+                formatted_query = query.format(start_ts=start_ts, end_ts=end_ts, tag_tuple=f"('{tag}')")
+                try:
+                    result = session.sql(formatted_query).collect()[0][2]
+                except Exception as e:
+                    continue
 
-            if isinstance(result, float):
-                result = round(result, 2)
-            metrics.append((name, result))
+                if isinstance(result, float):
+                    result = round(result, 2)
+                metrics.append((name, result))
 
-        if len(metrics) > 0:
-            st.subheader("Statistical Metrics:")
-            columns = st.columns(len(stat_queries))  
-
-            for col, metric in zip(columns, metrics):
-                col.metric(label=metric[0], value=metric[1])
-        else:
-            st.write("❄️ No data for selection.")
+            # Display metrics for the current tag
+            if len(metrics) > 0:
+                st.markdown(f"###### {tag}:")
+                columns = st.columns(len(metrics))
+                for col, metric in zip(columns, metrics):
+                    col.metric(label=metric[0], value=metric[1])
+            else:
+                st.write(f"No data for tag {tag}.")
 
 if taglist:
     with st.expander("🔍 Supporting Detail", expanded=False):
