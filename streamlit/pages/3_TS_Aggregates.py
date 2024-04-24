@@ -83,6 +83,7 @@ end_ts = datetime.datetime.combine(end_date, end_time)
 # Stats queries
 stat_queries = {
     'Average': "SELECT TAGNAME, TO_TIMESTAMP('{end_ts}') AS TIMESTAMP, AVG(VALUE_NUMERIC) AS VALUE FROM TS_TAG_READINGS WHERE TIMESTAMP >= '{start_ts}' AND TIMESTAMP < '{end_ts}' AND TAGNAME IN {tag_tuple} GROUP BY TAGNAME",
+    'Sum': "SELECT TAGNAME, TO_TIMESTAMP('{end_ts}') AS TIMESTAMP, SUM(VALUE_NUMERIC) AS VALUE FROM TS_TAG_READINGS WHERE TIMESTAMP >= '{start_ts}' AND TIMESTAMP < '{end_ts}' AND TAGNAME IN {tag_tuple} GROUP BY TAGNAME",
     'Count': "SELECT TAGNAME, TO_TIMESTAMP('{end_ts}') AS TIMESTAMP, COUNT(VALUE) AS VALUE FROM TS_TAG_READINGS WHERE TIMESTAMP >= '{start_ts}' AND TIMESTAMP < '{end_ts}' AND TAGNAME IN {tag_tuple} GROUP BY TAGNAME",
     'Count Distinct': "SELECT TAGNAME, TO_TIMESTAMP('{end_ts}') AS TIMESTAMP, COUNT(DISTINCT VALUE) AS VALUE FROM TS_TAG_READINGS WHERE TIMESTAMP >= '{start_ts}' AND TIMESTAMP < '{end_ts}' AND TAGNAME IN {tag_tuple} GROUP BY TAGNAME",
     'Standard Deviation': "SELECT TAGNAME, TO_TIMESTAMP('{end_ts}') AS TIMESTAMP, STDDEV(VALUE_NUMERIC) AS VALUE FROM TS_TAG_READINGS WHERE TIMESTAMP >= '{start_ts}' AND TIMESTAMP < '{end_ts}' AND TAGNAME IN {tag_tuple} GROUP BY TAGNAME",
@@ -97,8 +98,8 @@ if taglist:
         st.subheader('Tag Metadata')
         st.dataframe(df_tag_metadata, hide_index=True, use_container_width=True)
         # Iterate over each tag and fetch metrics
-        st.subheader(f"Statistical Metrics:")
-        st.markdown(f"##### Timestamp: {end_ts}")
+        st.subheader(f"Statistical Metrics")
+        st.markdown(f"##### Time Range: {start_ts} to {end_ts}")
         for tag in taglist:
             
             
@@ -118,7 +119,7 @@ if taglist:
 
             # Display metrics for the current tag
             if len(metrics) > 0:
-                st.markdown(f"###### {tag}:")
+                st.markdown(f"###### {tag}")
                 columns = st.columns(len(metrics))
                 for col, metric in zip(columns, metrics):
                     col.metric(label=metric[0], value=metric[1])

@@ -83,12 +83,13 @@ st.session_state["end_date"] = end_date
 st.session_state["end_time"] = end_time
 st.session_state["sample"] = sample
 
-drop_down = ['Average', 'Count', 'Count Distinct', 'Standard Deviation', 'Variance']
+drop_down = ['Average', 'Count', 'Count Distinct', 'Sum', 'Standard Deviation', 'Variance']
 
 agg_options = {
     'AVG': "AVG(VALUE_NUMERIC)",
     'COUNT': "COUNT(VALUE)::FLOAT",
     'COUNT_DISTINCT': "COUNT(DISTINCT VALUE)::FLOAT",
+    'SUM': "SUM(VALUE_NUMERIC)",
     'STDDEV': "STDDEV(VALUE_NUMERIC)",
     'VARIANCE': "VARIANCE(VALUE_NUMERIC)",
     'PERCENTILE_50': "APPROX_PERCENTILE(VALUE_NUMERIC, 0.5)",
