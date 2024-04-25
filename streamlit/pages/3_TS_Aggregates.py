@@ -104,7 +104,7 @@ if taglist:
         st.dataframe(df_tag_metadata, hide_index=True, use_container_width=True)
         # Iterate over each tag and fetch metrics
         st.subheader(f"Statistical Metrics")
-        st.markdown(f"##### Time Range: {start_ts} to {end_ts}")
+        st.markdown(f"##### TIME RANGE: {start_ts} - {end_ts}")
         for tag in taglist:
             metrics = []
 
@@ -122,7 +122,7 @@ if taglist:
 
             # Display metrics for the current tag
             if len(metrics) > 0:
-                st.markdown(f"###### {tag}")
+                st.markdown(f"##### {tag}")
                 columns = st.columns(wrap)
                 idx = 0
                 for i in range(math.ceil(len(metrics)/wrap)):
