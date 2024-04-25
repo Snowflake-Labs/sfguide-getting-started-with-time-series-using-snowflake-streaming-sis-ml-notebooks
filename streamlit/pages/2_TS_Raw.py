@@ -54,12 +54,12 @@ else:
 # Fetch tag metadata for selected tags 
 if taglist:
     query = """
-    SELECT TAGNAME, TAGUNITS, TAGDATATYPE, TAGDESCRIPTION FROM TS_TAG_REFERENCE
+    SELECT NAMESPACE, TAGNAME, TAGUNITS, TAGDATATYPE, TAGSOURCE FROM TS_TAG_REFERENCE
     WHERE TAGNAME IN ({})
     """.format(", ".join(f"'{tag}'" for tag in taglist))
-    df_tag_metadata = session.sql(query).toPandas()
+    df_tag_metadata = session.sql(query).sort(F.col('TAGNAME')).toPandas()
 else:
-    df_tag_metadata = pd.DataFrame(columns=['TAGNAME', 'TAGUNITS', 'TAGDATATYPE', 'TAGDESCRIPTION'])
+    df_tag_metadata = pd.DataFrame(columns=['NAMESPACE','TAGNAME', 'TAGUNITS', 'TAGDATATYPE', 'TAGSOURCE'])
 
 # Set time range
 st.sidebar.markdown('## Time Selection (UTC)')
@@ -101,7 +101,7 @@ FROM (
 CROSS JOIN TABLE(FUNCTION_TS_LTTB(DATE_PART(EPOCH_NANOSECOND, DATA.TIMESTAMP), DATA.VALUE, {sample}) OVER (PARTITION BY DATA.TAGNAME ORDER BY DATA.TIMESTAMP)) AS LTTB
 ORDER BY TAGNAME, TIMESTAMP'''
 
-# TS dataframe with query variables
+# Dataframe definitions for table and chart
 df_table_data = session.sql(
     table_query_str \
         .replace("{start_ts}", str(start_ts)) \
@@ -120,26 +120,17 @@ df_chart_data = session.sql(
         .replace("{sample}", str(sample)) \
         )
 
-# Create chart plot
+# Analytic outputs in a container
 if taglist:
     with st.container():
+        # Metadata Table
         st.subheader('Tag Metadata')
         st.dataframe(df_tag_metadata, hide_index=True, use_container_width=True)
 
-        alt_chart_1 = (
-            alt.Chart(df_chart_data.to_pandas())
-                .mark_line(point=False, interpolate="linear")
-                .encode(
-                    x=alt.X("utcyearmonthdatehoursminutesseconds(TIMESTAMP):T", title="TIMESTAMP", axis=alt.Axis(format='%Y-%m-%d %H:%M')),
-                    y=alt.Y("VALUE"),
-                    color=alt.Color("TAGNAME"),
-                    order="TIMESTAMP",
-                    #text=alt.Text("TOTAL_COST:Q", format=",.0f"),
-                )
-                .interactive()
-        )
-        st.altair_chart(alt_chart_1, use_container_width=True)
+		# Downsampled Chart
+        st.line_chart(df_chart_data.to_pandas(), x="TIMESTAMP", y="VALUE", color="TAGNAME", use_container_width=True)
 
+		# Readings Table
         st.subheader('Tag Data')
         rows_choices = [100, 1000, 10000, 100000]
         rows = st.selectbox('Select the number of rows to retrieve:', options=rows_choices)
@@ -153,6 +144,7 @@ if taglist:
 else:
     st.write("❄️ Select one or more tags to view data.")
 
+# Download data
 if taglist:
     with st.expander("📥 Download as CSV - " + str(df_table_data.count()) + " rows", expanded=False):
         if st.button("Get download link"):
@@ -184,6 +176,7 @@ if taglist:
             st.write(f"[📥 Download {file_name}]({url})")
             st.info("Right click and choose 'Open in new tab'")
 
+# Query detail
 if taglist:
     with st.expander("🔍 Supporting Detail", expanded=False):
         st.subheader('Query:')
@@ -194,27 +187,27 @@ if taglist:
             language='sql'
             )
 
+# Refresh toggle
 if taglist:
     with st.expander("♻️ Refresh Mode", expanded=False):
-        refresh_section = st.columns((1, 1, 6))
+        refresh_section = st.columns((1, 6))
         st.session_state["times_refreshed"] += 1
-        with refresh_section[1]:
-            st.info(f"**Times Refreshed** : {st.session_state['times_refreshed']} ")
         with refresh_section[0]:
-            refresh_mode = st.radio(
-                "Refresh Automatically?", options=["Yes", "No"], index=1, horizontal=True
+            refresh_mode = st.toggle(
+                "Auto Refresh", value=False
             )
 
-        if refresh_mode == "Yes":
-            refresh_section[2].success("Data will refresh every minute")
-            progress_b = refresh_section[2].progress(0)
+        if refresh_mode == True:
+            refresh_section[1].success("Data will refresh every minute")
+            progress_b = refresh_section[1].progress(0)
             for percent_complete in range(100):
                 time.sleep(0.6)
                 progress_b.progress(percent_complete + 1)
 
             st.experimental_rerun()
 
-        if refresh_mode == "No":
+        if refresh_mode == False:
             refresh = st.button("Refresh")
             if refresh:
+                st.session_state["times_refreshed"] == 0
                 st.experimental_rerun()

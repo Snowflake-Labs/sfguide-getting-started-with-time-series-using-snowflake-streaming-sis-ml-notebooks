@@ -54,12 +54,12 @@ else:
 # Fetch tag metadata for selected tags 
 if taglist:
     query = """
-    SELECT TAGNAME, TAGUNITS, TAGDATATYPE, TAGDESCRIPTION FROM TS_TAG_REFERENCE
+    SELECT NAMESPACE, TAGNAME, TAGUNITS, TAGDATATYPE, TAGSOURCE FROM TS_TAG_REFERENCE
     WHERE TAGNAME IN ({})
     """.format(", ".join(f"'{tag}'" for tag in taglist))
-    df_tag_metadata = session.sql(query).toPandas()
+    df_tag_metadata = session.sql(query).sort(F.col('TAGNAME')).toPandas()
 else:
-    df_tag_metadata = pd.DataFrame(columns=['TAGNAME', 'TAGUNITS', 'TAGDATATYPE', 'TAGDESCRIPTION'])
+    df_tag_metadata = pd.DataFrame(columns=['NAMESPACE','TAGNAME', 'TAGUNITS', 'TAGDATATYPE', 'TAGSOURCE'])
 
 # Set time range
 st.sidebar.markdown('## Time Selection (UTC)')
@@ -83,8 +83,7 @@ st.session_state["end_date"] = end_date
 st.session_state["end_time"] = end_time
 st.session_state["sample"] = sample
 
-drop_down = ['Average', 'Count', 'Count Distinct', 'Sum', 'Standard Deviation', 'Variance']
-
+# Agg name and column query
 agg_options = {
     'AVG': "AVG(VALUE_NUMERIC)",
     'COUNT': "COUNT(VALUE)::FLOAT",
@@ -99,11 +98,11 @@ agg_options = {
 # BINNING - Configuration
 st.sidebar.markdown('## Binning Configuration')
 selected_agg = st.sidebar.selectbox('Select Aggregation Method', list(agg_options.keys()))
-bin_range = st.sidebar.number_input('Enter Bin Range', min_value=1, value=1)  
+bin_range = st.sidebar.number_input('Enter Bin Range', min_value=1, value=1)
 interval_unit = st.sidebar.selectbox('Select Interval Unit', ['MINUTE', 'SECOND', 'HOUR', 'DAY', 'WEEK', 'MONTH'])
-label_position = st.sidebar.radio('Label Position', ['START', 'END'], index=1, horizontal=True) 
+label_position = st.sidebar.radio('Label Position', ['START', 'END'], index=1, horizontal=True)
 
-# TS Table Query Builder
+# Table and chart query definitions
 table_query_str = '''
 SELECT TAGNAME||'~'||'{selected_agg}'||'~'||'{bin_range}'||'{interval_unit}' AS TAGNAME, TIME_SLICE(DATEADD(MILLISECOND, -1, TIMESTAMP), {bin_range}, '{interval_unit}', '{label_position}') AS TIMESTAMP, {agg_options[selected_agg]} AS VALUE
 FROM TS_TAG_READINGS
@@ -128,7 +127,7 @@ ORDER BY TAGNAME, TIMESTAMP
 # Generate a SQL-compatible tuple from the tag list
 tag_tuple = str(tuple(taglist)) if len(taglist) > 1 else f"('{taglist[0]}')" if taglist else "()"
 
-# TS dataframe with query variables
+# Dataframe definitions for table and chart
 df_table_data = session.sql(
     table_query_str \
         .replace("{selected_agg}", str(selected_agg)) \
@@ -155,22 +154,20 @@ df_chart_data = session.sql(
         .replace("{agg_options[selected_agg]}", str(agg_options[selected_agg]))
         )
 
-# Create chart plot
+# Analytic outputs in a container
 if taglist:
     with st.container():
+        # Metadata Table
         st.subheader('Tag Metadata')
         st.dataframe(df_tag_metadata, hide_index=True, use_container_width=True)
 
-        st.write(f"AGGREGATION: {selected_agg}")
-        alt_chart_1 = alt.Chart(df_chart_data.to_pandas()).mark_line().encode(
-            alt.X("utcyearmonthdatehoursminutesseconds(TIMESTAMP):T", title="TIMESTAMP", axis=alt.Axis(format='%Y-%m-%d %H:%M')),
-            alt.Y("VALUE"),
-            alt.Color("TAGNAME")
-        ).interactive()
-        st.altair_chart(alt_chart_1, use_container_width=True)
+        # Downsampled Chart
+        st.write(f"##### AGGREGATION: {selected_agg}")
+        st.line_chart(df_chart_data.to_pandas(), x="TIMESTAMP", y="VALUE", color="TAGNAME", use_container_width=True)
 
+        # Readings Table
         st.subheader('Tag Data')
-        st.write(f"AGGREGATION: {selected_agg}")
+        st.write(f"##### AGGREGATION: {selected_agg}")
         rows_choices = [100, 1000, 10000, 100000]
         rows = st.selectbox('Select the number of rows to retrieve:', options=rows_choices)
         sorter = st.toggle('Data Order', value=False)
@@ -183,7 +180,7 @@ if taglist:
 else:
     st.write("❄️ Select one or more tags to view data.")
 
-# Download in a CSV
+# Download data
 if taglist:
     with st.expander("📥 Download as CSV - " + str(df_table_data.count()) + " rows", expanded=False):
         if st.button("Get download link"):
@@ -214,6 +211,7 @@ if taglist:
             st.write(f"[📥 Download {file_name}]({url})")
             st.info("Right click and choose 'Open in new tab'")
 
+# Query detail
 if taglist:
     with st.expander("🔍 Supporting Detail", expanded=False):
         st.subheader('Query:')
@@ -229,27 +227,27 @@ if taglist:
             .replace("{agg_options[selected_agg]}", str(agg_options[selected_agg]))
             , language="sql")
 
+# Refresh toggle
 if taglist:
     with st.expander("♻️ Refresh Mode", expanded=False):
-        refresh_section = st.columns((1, 1, 6))
+        refresh_section = st.columns((1, 6))
         st.session_state["times_refreshed"] += 1
-        with refresh_section[1]:
-            st.info(f"**Times Refreshed** : {st.session_state['times_refreshed']} ")
         with refresh_section[0]:
-            refresh_mode = st.radio(
-                "Refresh Automatically?", options=["Yes", "No"], index=1, horizontal=True
+            refresh_mode = st.toggle(
+                "Auto Refresh", value=False
             )
 
-        if refresh_mode == "Yes":
-            refresh_section[2].success("Data will refresh every minute")
-            progress_b = refresh_section[2].progress(0)
+        if refresh_mode == True:
+            refresh_section[1].success("Data will refresh every minute")
+            progress_b = refresh_section[1].progress(0)
             for percent_complete in range(100):
                 time.sleep(0.6)
                 progress_b.progress(percent_complete + 1)
 
             st.experimental_rerun()
 
-        if refresh_mode == "No":
+        if refresh_mode == False:
             refresh = st.button("Refresh")
             if refresh:
+                st.session_state["times_refreshed"] == 0
                 st.experimental_rerun()

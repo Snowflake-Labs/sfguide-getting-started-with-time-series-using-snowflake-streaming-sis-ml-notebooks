@@ -54,12 +54,12 @@ else:
 # Fetch tag metadata for selected tags 
 if taglist:
     query = """
-    SELECT TAGNAME, TAGUNITS, TAGDATATYPE, TAGDESCRIPTION FROM TS_TAG_REFERENCE
+    SELECT NAMESPACE, TAGNAME, TAGUNITS, TAGDATATYPE, TAGSOURCE FROM TS_TAG_REFERENCE
     WHERE TAGNAME IN ({})
     """.format(", ".join(f"'{tag}'" for tag in taglist))
-    df_tag_metadata = session.sql(query).toPandas()
+    df_tag_metadata = session.sql(query).sort(F.col('TAGNAME')).toPandas()
 else:
-    df_tag_metadata = pd.DataFrame(columns=['TAGNAME', 'TAGUNITS', 'TAGDATATYPE', 'TAGDESCRIPTION'])
+    df_tag_metadata = pd.DataFrame(columns=['NAMESPACE','TAGNAME', 'TAGUNITS', 'TAGDATATYPE', 'TAGSOURCE'])
 
 # Update session state
 st.session_state["selected_tag"] = taglist

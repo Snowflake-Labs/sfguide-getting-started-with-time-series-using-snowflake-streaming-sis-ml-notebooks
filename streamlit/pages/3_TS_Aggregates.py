@@ -10,7 +10,7 @@ import plotly.express as px
 import streamlit as st
 import pandas as pd
 import datetime
-import json
+import math
 
 # Get current session
 session = get_active_session()
@@ -33,6 +33,8 @@ if "end_time" not in st.session_state:
     st.session_state["end_time"] = datetime.datetime.now(datetime.timezone.utc) + timedelta(hours=1)
 if "sample" not in st.session_state:
     st.session_state["sample"] = 500
+if "metric_wrap" not in st.session_state:
+    st.session_state["metric_wrap"] = 5
 
 # Page title
 st.title('Time Series - Statistics and Aggregates')
@@ -55,12 +57,12 @@ else:
 # Fetch tag metadata for selected tags 
 if taglist:
     query = """
-    SELECT TAGNAME, TAGUNITS, TAGDATATYPE, TAGDESCRIPTION FROM TS_TAG_REFERENCE
+    SELECT NAMESPACE, TAGNAME, TAGUNITS, TAGDATATYPE, TAGSOURCE FROM TS_TAG_REFERENCE
     WHERE TAGNAME IN ({})
     """.format(", ".join(f"'{tag}'" for tag in taglist))
-    df_tag_metadata = session.sql(query).toPandas()
+    df_tag_metadata = session.sql(query).sort(F.col('TAGNAME')).toPandas()
 else:
-    df_tag_metadata = pd.DataFrame(columns=['TAGNAME', 'TAGUNITS', 'TAGDATATYPE', 'TAGDESCRIPTION'])
+    df_tag_metadata = pd.DataFrame(columns=['NAMESPACE','TAGNAME', 'TAGUNITS', 'TAGDATATYPE', 'TAGSOURCE'])
 
 # Set time range
 st.sidebar.markdown('## Time Selection (UTC)')
@@ -68,6 +70,9 @@ start_date = st.sidebar.date_input('Start Date', st.session_state["start_date"],
 start_time = st.sidebar.time_input('Start Time', st.session_state["start_time"])
 end_date = st.sidebar.date_input('End Date', st.session_state["end_date"], datetime.date(1995, 1, 1), datetime.date(2030, 12, 31))
 end_time = st.sidebar.time_input('End Time', st.session_state["end_time"])
+
+# Metric Wrap
+wrap = st.sidebar.number_input('Metric Columns', min_value=1, max_value=10, value=st.session_state["metric_wrap"])
 
 # Update session state
 st.session_state["selected_tag"] = taglist
@@ -101,8 +106,6 @@ if taglist:
         st.subheader(f"Statistical Metrics")
         st.markdown(f"##### Time Range: {start_ts} to {end_ts}")
         for tag in taglist:
-            
-            
             metrics = []
 
             for name, query in stat_queries.items():
@@ -120,11 +123,16 @@ if taglist:
             # Display metrics for the current tag
             if len(metrics) > 0:
                 st.markdown(f"###### {tag}")
-                columns = st.columns(len(metrics))
-                for col, metric in zip(columns, metrics):
-                    col.metric(label=metric[0], value=metric[1])
+                columns = st.columns(wrap)
+                idx = 0
+                for i in range(math.ceil(len(metrics)/wrap)):
+                    for col, metric in zip(columns, metrics[idx:idx+wrap]):
+                        col.metric(label=metric[0], value=metric[1])
+                    idx += wrap
             else:
                 st.write(f"No data for tag {tag}.")
+else:
+    st.write("❄️ Select one or more tags to view data.")
 
 if taglist:
     with st.expander("🔍 Supporting Detail", expanded=False):
@@ -137,25 +145,24 @@ if taglist:
 
 if taglist:
     with st.expander("♻️ Refresh Mode", expanded=False):
-        refresh_section = st.columns((1, 1, 6))
+        refresh_section = st.columns((1, 6))
         st.session_state["times_refreshed"] += 1
-        with refresh_section[1]:
-            st.info(f"**Times Refreshed** : {st.session_state['times_refreshed']} ")
         with refresh_section[0]:
-            refresh_mode = st.radio(
-                "Refresh Automatically?", options=["Yes", "No"], index=1, horizontal=True
+            refresh_mode = st.toggle(
+                "Auto Refresh", value=False
             )
 
-        if refresh_mode == "Yes":
-            refresh_section[2].success("Data will refresh every minute")
-            progress_b = refresh_section[2].progress(0)
+        if refresh_mode == True:
+            refresh_section[1].success("Data will refresh every minute")
+            progress_b = refresh_section[1].progress(0)
             for percent_complete in range(100):
                 time.sleep(0.6)
                 progress_b.progress(percent_complete + 1)
 
             st.experimental_rerun()
 
-        if refresh_mode == "No":
+        if refresh_mode == False:
             refresh = st.button("Refresh")
             if refresh:
+                st.session_state["times_refreshed"] == 0
                 st.experimental_rerun()
