@@ -20,6 +20,8 @@ st.set_page_config(page_title="Time Series - Custom", layout="wide")
 # Setup session state variables
 if "times_refreshed" not in st.session_state:
     st.session_state["times_refreshed"] = 0
+if "refresh_mode" not in st.session_state:
+    st.session_state["refresh_mode"] = False
 if "selected_tag" not in st.session_state:
     st.session_state["selected_tag"] = []
 if "start_date" not in st.session_state:
@@ -31,7 +33,7 @@ if "end_date" not in st.session_state:
 if "end_time" not in st.session_state:
     st.session_state["end_time"] = datetime.datetime.now(datetime.timezone.utc) + timedelta(hours=1)
 if "sample" not in st.session_state:
-    st.session_state["sample"] = 500
+    st.session_state["sample"] = 1000
 
 # Page title
 st.title('Time Series - Custom')

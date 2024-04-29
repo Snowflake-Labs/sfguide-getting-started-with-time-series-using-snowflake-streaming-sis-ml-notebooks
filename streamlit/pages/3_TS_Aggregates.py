@@ -21,6 +21,8 @@ st.set_page_config(page_title="Time Series - Aggregates", layout="wide")
 # Setup session state variables
 if "times_refreshed" not in st.session_state:
     st.session_state["times_refreshed"] = 0
+if "refresh_mode" not in st.session_state:
+    st.session_state["refresh_mode"] = False
 if "selected_tag" not in st.session_state:
     st.session_state["selected_tag"] = []
 if "start_date" not in st.session_state:
@@ -32,7 +34,7 @@ if "end_date" not in st.session_state:
 if "end_time" not in st.session_state:
     st.session_state["end_time"] = datetime.datetime.now(datetime.timezone.utc) + timedelta(hours=1)
 if "sample" not in st.session_state:
-    st.session_state["sample"] = 500
+    st.session_state["sample"] = 1000
 if "metric_wrap" not in st.session_state:
     st.session_state["metric_wrap"] = 5
 
@@ -80,6 +82,7 @@ st.session_state["start_date"] = start_date
 st.session_state["start_time"] = start_time
 st.session_state["end_date"] = end_date
 st.session_state["end_time"] = end_time
+st.session_state["metric_wrap"] = wrap
 
 # Combine start and end date time components
 start_ts = datetime.datetime.combine(start_date, start_time)
@@ -122,6 +125,7 @@ if taglist:
 
             # Display metrics for the current tag
             if len(metrics) > 0:
+                st.markdown(f"---")
                 st.markdown(f"##### {tag}")
                 columns = st.columns(wrap)
                 idx = 0
@@ -149,8 +153,9 @@ if taglist:
         st.session_state["times_refreshed"] += 1
         with refresh_section[0]:
             refresh_mode = st.toggle(
-                "Auto Refresh", value=False
+                "Auto Refresh", value=st.session_state["refresh_mode"]
             )
+            st.session_state["refresh_mode"] = refresh_mode
 
         if refresh_mode == True:
             refresh_section[1].success("Data will refresh every minute")
@@ -159,6 +164,10 @@ if taglist:
                 time.sleep(0.6)
                 progress_b.progress(percent_complete + 1)
 
+            st.session_state["start_date"] = datetime.datetime.now(datetime.timezone.utc) - timedelta(hours=1)
+            st.session_state["start_time"] = datetime.datetime.now(datetime.timezone.utc) - timedelta(hours=1)
+            st.session_state["end_date"] = datetime.datetime.now(datetime.timezone.utc) + timedelta(hours=1)
+            st.session_state["end_time"] = datetime.datetime.now(datetime.timezone.utc) + timedelta(hours=1)
             st.experimental_rerun()
 
         if refresh_mode == False:

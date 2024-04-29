@@ -15,7 +15,7 @@ COMMENT = 'IOTSTREAM staging table.'
 
 /* EXTERNAL ACTIVITY
 
-Configure the IOT Stream client
+Run IOT Stream client
 
 */
 
