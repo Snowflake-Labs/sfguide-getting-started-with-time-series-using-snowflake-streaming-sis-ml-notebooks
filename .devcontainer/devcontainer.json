@@ -4,13 +4,13 @@
 	"name": "snowflake-hol-timeseries",
 	"image": "mcr.microsoft.com/devcontainers/python:0-3.11",
 
-	// Install conda and java 11 features
+	// Install conda and java features
 	"features": {
 		"ghcr.io/devcontainers/features/conda:1": {
 			"version": "latest"
 		},
 		"ghcr.io/devcontainers/features/java:1": {
-			"version": "11"
+			"version": "20"
 		}
 	},
 	
