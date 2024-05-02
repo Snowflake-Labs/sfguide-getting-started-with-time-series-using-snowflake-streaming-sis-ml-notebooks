@@ -169,7 +169,6 @@ if taglist:
 
         # Readings Table
         st.subheader('Tag Data')
-        st.write(f"##### AGGREGATION: {selected_agg}")
         rows_choices = [100, 1000, 10000, 100000]
         rows = st.selectbox('Select the number of rows to retrieve:', options=rows_choices)
         sorter = st.toggle('Data Order', value=False)
