@@ -106,7 +106,7 @@ label_position = st.sidebar.radio('Label Position', ['START', 'END'], index=1, h
 
 # Table and chart query definitions
 table_query_str = '''
-SELECT TAGNAME||'~'||'{selected_agg}'||'~'||'{bin_range}'||'{interval_unit}' AS TAGNAME, TIME_SLICE(DATEADD(MILLISECOND, -1, TIMESTAMP), {bin_range}, '{interval_unit}', '{label_position}') AS TIMESTAMP, {agg_options[selected_agg]} AS VALUE
+SELECT TAGNAME||'~'||'{selected_agg}'||'_'||'{bin_range}'||'{interval_unit}' AS TAGNAME, TIME_SLICE(DATEADD(MILLISECOND, -1, TIMESTAMP), {bin_range}, '{interval_unit}', '{label_position}') AS TIMESTAMP, {agg_options[selected_agg]} AS VALUE
 FROM TS_TAG_READINGS
 WHERE TIMESTAMP >=  '{start_ts}' AND TIMESTAMP < '{end_ts}' AND TAGNAME IN {tag_tuple}
 GROUP BY TAGNAME, TIME_SLICE(DATEADD(MILLISECOND, -1, TIMESTAMP), {bin_range}, '{interval_unit}', '{label_position}')

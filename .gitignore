@@ -166,6 +166,10 @@ data/*/*
 notebooks/test*
 
 # Apps
+# Streamlist
+streamlit/test*
+streamlit/pages/test*
+
 # Notebooks
 iotstream
 iotstream.zip
