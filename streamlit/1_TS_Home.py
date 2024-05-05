@@ -34,7 +34,7 @@ st.title('Getting Started with Time Series')
 with st.container():
     st.write("## Overview")
     st.markdown("""
-        Welcome to the **Time Series Analysis Dashboard**. This app provides comprehensive analysis tools for time series data, focusing on statistical metrics and data visualization. Below is an overview of the different sections available within this dashboard:
+        Welcome to the **Time Series Analysis Application**. This application provides comprehensive analysis tools for time series data, focusing on statistical metrics and data visualization. Below is an overview of the different sections available within this application.
     """)
     
 

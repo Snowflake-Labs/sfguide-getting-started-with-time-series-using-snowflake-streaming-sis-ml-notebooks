@@ -88,9 +88,11 @@ st.session_state["sample"] = sample
 # Agg name and column query
 agg_options = {
     'AVG': "AVG(VALUE_NUMERIC)",
+    'MIN': "MIN(VALUE_NUMERIC)",
+    'MAX': "MAX(VALUE_NUMERIC)",
+    'SUM': "SUM(VALUE_NUMERIC)",
     'COUNT': "COUNT(VALUE)::FLOAT",
     'COUNT_DISTINCT': "COUNT(DISTINCT VALUE)::FLOAT",
-    'SUM': "SUM(VALUE_NUMERIC)",
     'STDDEV': "STDDEV(VALUE_NUMERIC)",
     'VARIANCE': "VARIANCE(VALUE_NUMERIC)",
     'PERCENTILE_50': "APPROX_PERCENTILE(VALUE_NUMERIC, 0.5)",
@@ -106,20 +108,20 @@ label_position = st.sidebar.radio('Label Position', ['START', 'END'], index=1, h
 
 # Table and chart query definitions
 table_query_str = '''
-SELECT TAGNAME||'~'||'{selected_agg}'||'_'||'{bin_range}'||'{interval_unit}' AS TAGNAME, TIME_SLICE(DATEADD(MILLISECOND, -1, TIMESTAMP), {bin_range}, '{interval_unit}', '{label_position}') AS TIMESTAMP, {agg_options[selected_agg]} AS VALUE
+SELECT TAGNAME||'~'||'{selected_agg}'||'_'||'{bin_range}'||'{interval_unit}' AS TAGNAME, TIME_SLICE(TIMESTAMP, {bin_range}, '{interval_unit}', '{label_position}') AS TIMESTAMP, {agg_options[selected_agg]} AS VALUE
 FROM TS_TAG_READINGS
 WHERE TIMESTAMP >=  '{start_ts}' AND TIMESTAMP < '{end_ts}' AND TAGNAME IN {tag_tuple}
-GROUP BY TAGNAME, TIME_SLICE(DATEADD(MILLISECOND, -1, TIMESTAMP), {bin_range}, '{interval_unit}', '{label_position}')
+GROUP BY TAGNAME, TIME_SLICE(TIMESTAMP, {bin_range}, '{interval_unit}', '{label_position}')
 ORDER BY TAGNAME, TIMESTAMP
 '''
 
 chart_query_str = f'''
 SELECT DATA.TAGNAME, LTTB.TIMESTAMP::VARCHAR::TIMESTAMP_NTZ AS TIMESTAMP, LTTB.VALUE::FLOAT AS VALUE
 FROM (
-    SELECT TAGNAME||'~'||'{selected_agg}'||'~'||'{bin_range}'||'{interval_unit}' AS TAGNAME, TIME_SLICE(DATEADD(MILLISECOND, -1, TIMESTAMP), {bin_range}, '{interval_unit}', '{label_position}') AS TIMESTAMP, {agg_options[selected_agg]} AS VALUE
+    SELECT TAGNAME||'~'||'{selected_agg}'||'~'||'{bin_range}'||'{interval_unit}' AS TAGNAME, TIME_SLICE(TIMESTAMP, {bin_range}, '{interval_unit}', '{label_position}') AS TIMESTAMP, {agg_options[selected_agg]} AS VALUE
     FROM TS_TAG_READINGS
     WHERE TIMESTAMP >=  '{start_ts}' AND TIMESTAMP < '{end_ts}' AND TAGNAME IN {tag_tuple}
-    GROUP BY TAGNAME, TIME_SLICE(DATEADD(MILLISECOND, -1, TIMESTAMP), {bin_range}, '{interval_unit}', '{label_position}')
+    GROUP BY TAGNAME, TIME_SLICE(TIMESTAMP, {bin_range}, '{interval_unit}', '{label_position}')
     ORDER BY TAGNAME, TIMESTAMP
 ) AS DATA
 CROSS JOIN TABLE(FUNCTION_TS_LTTB(DATE_PART(EPOCH_NANOSECOND, DATA.TIMESTAMP), DATA.VALUE, {sample}) OVER (PARTITION BY DATA.TAGNAME ORDER BY DATA.TIMESTAMP)) AS LTTB
