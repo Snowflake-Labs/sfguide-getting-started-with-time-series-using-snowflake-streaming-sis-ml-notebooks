@@ -2,7 +2,7 @@
 SNOWFLAKE TRANSFORM SCRIPT
 */
 
--- Setup Transform Dynamic Tables
+-- Dynamic Tables Setup
 -- Set role, context, and warehouse
 USE ROLE ROLE_HOL_TIMESERIES;
 USE HOL_TIMESERIES.TRANSFORM;
@@ -40,7 +40,9 @@ SELECT
 FROM HOL_TIMESERIES.STAGING.RAW_TS_IOTSTREAM_DATA SRC
 QUALIFY ROW_NUMBER() OVER (PARTITION BY UPPER(CONCAT('/', SRC.RECORD_METADATA:headers:namespace::VARCHAR, '/', TRIM(SRC.RECORD_CONTENT:tagname::VARCHAR))), SRC.RECORD_CONTENT:timestamp::NUMBER ORDER BY SRC.RECORD_METADATA:offset::NUMBER) = 1;
 
--- Setup Analytics Views
+
+
+-- Analytics Views Setup
 -- Set role, context, and warehouse
 USE ROLE ROLE_HOL_TIMESERIES;
 USE HOL_TIMESERIES.ANALYTICS;
