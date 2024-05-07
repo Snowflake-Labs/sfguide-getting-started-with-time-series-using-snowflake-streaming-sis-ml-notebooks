@@ -5,9 +5,10 @@ Getting Started with Time Series Analysis in Snowflake
 
 In this guide, you will get to explore Time Series functionality in Snowflake using:
 * [Snowpipe Streaming](https://docs.snowflake.com/en/user-guide/data-load-snowpipe-streaming-overview)
+* [Dynamic Tables](https://docs.snowflake.com/en/user-guide/dynamic-tables-intro)
+* Native Time Series Functions & Cortex ML functions
+* [Snowpark UDFs](https://docs.snowflake.com/en/developer-guide/udf/udf-overview)
 * [Streamlit in Snowflake](https://docs.snowflake.com/en/developer-guide/streamlit/about-streamlit)
-* [Snowlflake Cortex ML Functions](https://docs.snowflake.com/en/user-guide/snowflake-cortex/overview)
-* Notebooks
 
 ## Step-By-Step Guide
 
