@@ -106,8 +106,6 @@ FROM
 $$
 ;
 
--- Directly Call Table Function
-SELECT * FROM TABLE(HOL_TIMESERIES.ANALYTICS.FUNCTION_TS_INTERPOLATE('/IOT/SENSOR/TAG401', '2024-01-01 01:05:23'::TIMESTAMP_NTZ, 5, 100)) ORDER BY TAGNAME, TIMESTAMP;
 
 -- Add helper precedure to accept start and end times, and return either LOCF or Linear Interpolated Values
 CREATE OR REPLACE PROCEDURE HOL_TIMESERIES.ANALYTICS.PROCEDURE_TS_INTERPOLATE_LIN (
@@ -142,20 +140,6 @@ END;
 $$
 ;
 
--- Call Interpolate Procedure with Taglist, Start Time, End Time, and Intervals
-CALL HOL_TIMESERIES.ANALYTICS.PROCEDURE_TS_INTERPOLATE_LIN(
-    -- V_TAGLIST
-    '/IOT/SENSOR/TAG401',
-    -- V_FROM_TIME
-    '2024-01-01 01:05:00',
-    -- V_TO_TIME
-    '2024-01-01 03:05:00',
-    -- V_INTERVAL
-    10,
-    -- V_INTERP_TYPE
-    'INTERP'
-);
-
 -- LTTB Downsampling Table Function
 CREATE OR REPLACE FUNCTION HOL_TIMESERIES.ANALYTICS.FUNCTION_TS_LTTB (
     TIMESTAMP NUMBER,
@@ -189,37 +173,6 @@ class lttb_run:
             )
             return df[['TIMESTAMP','VALUE']].iloc[idx]
 $$;
-
-
--- LTTB - RAW
-SELECT data.tagname, lttb.timestamp::varchar::timestamp_ntz AS timestamp, lttb.value 
-FROM (
-SELECT TAGNAME, TIMESTAMP, VALUE_NUMERIC as VALUE
-FROM HOL_TIMESERIES.ANALYTICS.TS_TAG_READINGS
-WHERE TIMESTAMP > '2024-01-01 00:00:00'
-AND TIMESTAMP <= '2024-02-01 00:00:30'
-AND TAGNAME = '/IOT/SENSOR/TAG301'
-) AS data 
-CROSS JOIN TABLE(HOL_TIMESERIES.ANALYTICS.function_ts_lttb(date_part(epoch_nanosecond, data.timestamp), data.value, 500) OVER (PARTITION BY data.tagname ORDER BY data.timestamp)) AS lttb
-ORDER BY tagname, timestamp
-;
-
--- LTTB - Pre-Aggregated
-SELECT data.tagname, lttb.timestamp::varchar::timestamp_ntz AS timestamp, lttb.value 
-FROM (
-SELECT tagname, TIME_SLICE(DATEADD(MILLISECOND, -1, timestamp), 1, 'MINUTE', 'END') AS timestamp, AVG(value_numeric) AS value
-FROM HOL_TIMESERIES.ANALYTICS.TS_TAG_READINGS
-WHERE TIMESTAMP > '2024-01-01 00:00:00'
-AND TIMESTAMP <= '2024-02-01 00:00:30'
-AND TAGNAME = '/IOT/SENSOR/TAG301'
-GROUP BY tagname, TIME_SLICE(DATEADD(MILLISECOND, -1, timestamp), 1, 'MINUTE', 'END')
-) AS data 
-CROSS JOIN TABLE(HOL_TIMESERIES.ANALYTICS.function_ts_lttb(date_part(epoch_nanosecond, data.timestamp), data.value, 500) OVER (PARTITION BY data.tagname ORDER BY data.timestamp)) AS lttb
-ORDER BY tagname, timestamp
-;
-
--- GET FUNCTION DETAILS
-DESC FUNCTION HOL_TIMESERIES.ANALYTICS.FUNCTION_TS_LTTB(NUMBER,FLOAT,NUMBER);
 
 /*
 FUNCTIONS SCRIPT COMPLETED

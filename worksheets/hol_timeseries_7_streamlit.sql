@@ -18,9 +18,6 @@ Use Snowflake CLI to upload Streamlit app
 
 */
 
--- LIST STREAMLITS
-SHOW STREAMLITS;
-
 /*
 STREAMLIT SCRIPT COMPLETED
 */
