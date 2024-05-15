@@ -10,7 +10,7 @@ USE WAREHOUSE HOL_ANALYTICS_WH;
 -- Run Time Series Analysis across various query profiles
 
 /* RAW
-Use Case: Retrieve time series data between an input start time and end time.
+Retrieve time series data between an input start time and end time.
 */
 SELECT TAGNAME, TIMESTAMP, VALUE
 FROM HOL_TIMESERIES.ANALYTICS.TS_TAG_READINGS
@@ -21,7 +21,7 @@ ORDER BY TAGNAME, TIMESTAMP;
 
 -- STATISTICAL AGGREGATES, DISTRIBUTIONS, AND WATERMARKS
 /* COUNT AND COUNT DISTINCT
-Use Case: Retrieve count and distinct counts within the time boundary.
+Retrieve count and distinct counts within the time boundary.
 
 COUNT - Count of all values
 COUNT DISTINCT - Count of unique values
@@ -39,7 +39,7 @@ GROUP BY TAGNAME
 ORDER BY TAGNAME;
 
 /* MIN/MAX/AVG/SUM/APPROX_PERCENTILE
-Use Case: Retrieve statistical aggregates for the readings within the time boundary.
+Retrieve statistical aggregates for the readings within the time boundary.
 
 MIN - Minimum value
 MAX - Maximum value
@@ -65,7 +65,7 @@ GROUP BY TAGNAME
 ORDER BY TAGNAME;
 
 /* RELATIVE FREQUENCY
-Use Case: Find the value that occurs most frequently within a time frame.
+Find the value that occurs most frequently within a time frame.
 */
 SELECT 
     TAGNAME,
@@ -94,7 +94,7 @@ and multiple aggregations can be grouped together using unions.
 */
 
 /* DISTRIBUTIONS - sample distributions statistics
-Use Case: Retrieve distribution sample statistics within the time boundary.
+Retrieve distribution sample statistics within the time boundary.
 
 STDDEV - Closeness to the mean/average of the distribution.
 VARIANCE - Spread between numbers in the time boundary.
@@ -133,7 +133,7 @@ GROUP BY TAGNAME
 ORDER BY TAGNAME;
 
 /* WATERMARKS
-Use Case: Retrieve both the high (latest time stamped value) and low watermark (earliest time stamped value) readings within the time boundary.
+Retrieve both the high watermark (latest time stamped value) and low watermark (earliest time stamped value) readings within the time boundary.
 
 MAX_BY - High Watermark - latest reading in the time boundary
 MIN_BY - Low Watermark - earliest reading in the time boundary
@@ -154,7 +154,7 @@ GROUP BY TAGNAME
 ORDER BY TAGNAME;
 
 /*
-Time Series Window Functions
+Time Series Analytics using Window Functions
 
 Window Functions enable aggregates to operate over groups of data,
 looking forward and backwards in the ordered data rows,
@@ -166,7 +166,10 @@ The ORDER BY clause can be used with ASC (ascending) or DESC (descending), and a
 */
 
 /* WINDOW FUNCTIONS - LAG AND LEAD
-Use Case: Access data in previous (LAG) or subsequent (LEAD) rows without having to join the table to itself.
+Consider the use case where you need to analyze the changes in the readings of a specific IoT sensor
+over a short period (say 10 seconds) by examining the current, previous, and next values of the readings.
+
+Access data in previous (LAG) or subsequent (LEAD) rows without having to join the table to itself.
 
 LAG - Prior time period value
 LEAD - Next time period value
@@ -183,7 +186,11 @@ AND TAGNAME = '/IOT/SENSOR/TAG301'
 ORDER BY TAGNAME, TIMESTAMP;
 
 /* FIRST_VALUE AND LAST_VALUE
-Use Case: Retrieve the first and last values within the time boundary.
+Consider the use case of change detection where you want to detect any sudden pressure changes in comparison
+to initial and final values in a specific time frame.
+
+For this you would use the FIRST_VALUE and LAST_VALUE window functions to retrieve the first and last
+values within the time boundary to perform such an analysis.
 
 FIRST_VALUE - First value in the time boundary
 LAST_VALUE - Last value in the time boundary
@@ -199,8 +206,160 @@ AND TIMESTAMP < '2024-01-01 00:00:10'
 AND TAGNAME = '/IOT/SENSOR/TAG301'
 ORDER BY TAGNAME, TIMESTAMP;
 
+/* WINDOW FUNCTIONS - ROWS BETWEEN
+Consider the use case, where the data you have second by second sensor reading and you want to compute the
+rolling 6 second average of sensor readings over a specific time frame to detect trends and patterns in the data. 
+
+In cases where the data doesn't have any gaps like this one, you can use ROW BETWEEN
+window frames to perform these rolling calculations.
+
+Create a rolling AVG for the five preceding and following rows, inclusive of the current row.
+
+ROW_AVG_PRECEDING - Rolling AVG from 5 preceding rows and current row
+ROW_AVG_FOLLOWING - Rolling AVG from current row and 5 following rows
+*/
+SELECT TAGNAME, TIMESTAMP, VALUE_NUMERIC AS VALUE,
+    AVG(VALUE_NUMERIC) OVER (
+        PARTITION BY TAGNAME ORDER BY TIMESTAMP
+        ROWS BETWEEN 5 PRECEDING AND CURRENT ROW) AS ROW_AVG_PRECEDING,
+    AVG(VALUE_NUMERIC) OVER (
+        PARTITION BY TAGNAME ORDER BY TIMESTAMP
+        ROWS BETWEEN CURRENT ROW AND 5 FOLLOWING) AS ROW_AVG_FOLLOWING
+FROM HOL_TIMESERIES.ANALYTICS.TS_TAG_READINGS
+WHERE TIMESTAMP >= '2024-01-01 00:00:00'
+AND TIMESTAMP < '2024-01-01 00:01:00'
+AND TAGNAME = '/IOT/SENSOR/TAG301'
+ORDER BY TAGNAME, TIMESTAMP;
+
+/* SENSOR WITH TIME GAPS
+Now assume a scenario, where there are time gaps or missing data received from a sensor.
+Such as a sensor that sends roughly every 5 seconds, or if a sensor experiences a fault.
+*/
+SELECT TAGNAME, TIMESTAMP, VALUE_NUMERIC AS VALUE
+FROM HOL_TIMESERIES.ANALYTICS.TS_TAG_READINGS
+WHERE TIMESTAMP >= '2024-01-01 00:00:00'
+AND TIMESTAMP < '2024-01-01 00:02:00'
+AND TAGNAME = '/IOT/SENSOR/TAG101'
+ORDER BY TAGNAME, TIMESTAMP;
+
+/* WINDOW FUNCTIONS - RANGE BETWEEN
+Now say you want to perform an aggregation to calculate the 5 minute rolling average of sensor readings,
+over a specific time frame to detect trends and patterns in the data. 
+
+ROWS BETWEEN would require additional calculation to determine the number of rows that make up the 5 minute interval,
+and may NOT yield correct results if the sensor data arrives at INCONSISTENT times.
+
+This is where **RANGE BETWEEN** can be used with intervals of time that can be added or subtracted from timestamps.
+
+RANGE BETWEEN differs from ROWS BETWEEN in that it can:
+* Handle time gaps in data being analyzed.
+    For example, if a sensor is faulty or send data at incosistent intervals.
+
+* Allow for reporting frequencies that differ from the data frequency.
+    For example, data at 5 second frequency that you want to aggregate the prior 5 minutes.
+
+Create a rolling AVG and SUM for the time INTERVAL five minutes preceding, inclusive of the current row.
+
+INTERVAL - 5 MIN AVG and SUM preceding the current row
+*/
+SELECT TAGNAME, TIMESTAMP, VALUE_NUMERIC AS VALUE,
+    AVG(VALUE_NUMERIC) OVER (
+        PARTITION BY TAGNAME ORDER BY TIMESTAMP
+        RANGE BETWEEN INTERVAL '5 MIN' PRECEDING AND CURRENT ROW) AS RANGE_AVG_5MIN,
+    SUM(VALUE_NUMERIC) OVER (
+        PARTITION BY TAGNAME ORDER BY TIMESTAMP
+        RANGE BETWEEN INTERVAL '5 MIN' PRECEDING AND CURRENT ROW) AS RANGE_SUM_5MIN
+FROM HOL_TIMESERIES.ANALYTICS.TS_TAG_READINGS
+WHERE TIMESTAMP > '2024-01-01 00:00:00'
+AND TIMESTAMP <= '2024-01-01 01:00:00'
+AND TAGNAME = '/IOT/SENSOR/TAG101'
+ORDER BY TAGNAME, TIMESTAMP;
+
+/*
+CHART: Rolling 5 MIN Average and Sum
+
+1. Select the `Chart` sub tab below the worksheet.
+2. Under Data select `VALUE` column and set the Aggregation to `MAX`.
+3. Select `+ Add column` and select `RANGE_AVG_PRECEDING` and set Aggregation to `MAX`.
+*/
+
+/* TIME BINNING - 5 min AGGREGATE with START and END label
+Create a downsampled time series data set with 5 minute aggregates, showing the START and END timestamp label of each interval.
+
+COUNT - Count of values within the time bin
+SUM - Sum of values within the time bin
+AVG - Average of values (mean) within the time bin
+PERCENTILE_95 - 95% of values are less than this within the time bin
+*/
+SELECT TAGNAME,
+    TIME_SLICE(TIMESTAMP, 5, 'MINUTE', 'START') AS START_TIMESTAMP,
+    TIME_SLICE(TIMESTAMP, 5, 'MINUTE', 'END') AS END_TIMESTAMP,
+    COUNT(*) AS COUNT_VALUE,
+    SUM(VALUE_NUMERIC) AS SUM_VALUE,
+    AVG(VALUE_NUMERIC) AS AVG_VALUE,
+    APPROX_PERCENTILE(VALUE_NUMERIC, 0.95) AS PERCENTILE_95_VALUE
+FROM HOL_TIMESERIES.ANALYTICS.TS_TAG_READINGS
+WHERE TIMESTAMP >= '2024-01-01 00:00:00'
+AND TIMESTAMP < '2024-01-01 01:00:00'
+AND TAGNAME = '/IOT/SENSOR/TAG301'
+GROUP BY TIME_SLICE(TIMESTAMP, 5, 'MINUTE', 'START'), TIME_SLICE(TIMESTAMP, 5, 'MINUTE', 'END'), TAGNAME
+ORDER BY TAGNAME, START_TIMESTAMP;
+
+/* ASOF JOIN - Align a 1 second tag with a 5 second tag
+Using the `ASOF JOIN`, join two data sets by applying a matching condition to pair closely aligned timestamps and values.
+*/
+SELECT ONE_SEC.TAGNAME AS ONE_SEC_TAGNAME, ONE_SEC.TIMESTAMP AS ONE_SEC_TIMESTAMP, ONE_SEC.VALUE_NUMERIC AS ONE_SEC_VALUE, FIVE_SEC.VALUE_NUMERIC AS FIVE_SEC_VALUE, FIVE_SEC.TAGNAME AS FIVE_SEC_TAGNAME, FIVE_SEC.TIMESTAMP AS FIVE_SEC_TIMESTAMP
+FROM HOL_TIMESERIES.ANALYTICS.TS_TAG_READINGS ONE_SEC
+ASOF JOIN (
+    -- 5 sec tag data
+    SELECT TAGNAME, TIMESTAMP, VALUE_NUMERIC
+    FROM HOL_TIMESERIES.ANALYTICS.TS_TAG_READINGS
+    WHERE TAGNAME = '/IOT/SENSOR/TAG101'
+    ) FIVE_SEC
+MATCH_CONDITION(ONE_SEC.TIMESTAMP >= FIVE_SEC.TIMESTAMP)
+WHERE ONE_SEC.TAGNAME = '/IOT/SENSOR/TAG301'
+AND ONE_SEC.TIMESTAMP >= '2024-01-01 00:00:00'
+AND ONE_SEC.TIMESTAMP < '2024-01-01 00:01:00'
+ORDER BY ONE_SEC.TIMESTAMP;
+
+/* TIME GAP FILLING
+Generate timestamps given a start and end time boundary, and join to a tag with less frequent values.
+
+TIME_PERIODS - A variable passed into the query to determine the number of time stamps generated for gap filling.
+*/
+SET TIME_PERIODS = (SELECT TIMESTAMPDIFF('SECOND', '2024-01-01 00:00:00'::TIMESTAMP_NTZ, '2024-01-01 00:00:00'::TIMESTAMP_NTZ + INTERVAL '1 MINUTE'));
+
+-- LAST OBSERVED VALUE CARRIED FORWARD (LOCF) - IGNORE NULLS
+WITH TIMES AS (
+    SELECT
+    DATEADD('SECOND', ROW_NUMBER() OVER (ORDER BY SEQ8()) - 1, '2024-01-01')::TIMESTAMP_NTZ AS TIMESTAMP,
+    '/IOT/SENSOR/TAG101' AS TAGNAME
+    FROM TABLE(GENERATOR(ROWCOUNT => $TIME_PERIODS))
+),
+DATA AS (
+    SELECT TAGNAME, TIMESTAMP, VALUE_NUMERIC AS VALUE,
+    FROM HOL_TIMESERIES.ANALYTICS.TS_TAG_READINGS
+    WHERE TIMESTAMP >= '2024-01-01 00:00:00'
+    AND TIMESTAMP < '2024-01-01 00:01:00'
+    AND TAGNAME = '/IOT/SENSOR/TAG101'
+)
+SELECT TIMES.TIMESTAMP,
+    A.TAGNAME AS TAGNAME,
+    L.VALUE,
+    A.VALUE AS LOCF_VALUE
+FROM TIMES
+LEFT JOIN DATA L ON TIMES.TIMESTAMP = L.TIMESTAMP AND TIMES.TAGNAME = L.TAGNAME
+ASOF JOIN DATA A MATCH_CONDITION(TIMES.TIMESTAMP >= A.TIMESTAMP) ON TIMES.TAGNAME = A.TAGNAME
+ORDER BY TAGNAME, TIMESTAMP;
+
+/*
+APPENDIX
+
+ADDITIONAL QUERIES - This section contains variations to the existing queries.
+*/
+
 /* FIRST_VALUE AND LAST_VALUE CONSOLIDATED
-Use Case: Find the variance between the first and last value within the time boundary.
+Find the variance between the first and last value within the time boundary.
 
 FIRST_VALUE - First value in the time boundary
 LAST_VALUE - Last value in the time boundary
@@ -219,156 +378,6 @@ FROM (
 )
 GROUP BY TAGNAME, FIRST_VALUE, LAST_VALUE
 ORDER BY TAGNAME;
-
-
-/* WINDOW FUNCTIONS - ROWS BETWEEN
-Use Case: Create a rolling SUM for the five preceding and following rows, inclusive of the current row.
-
-ROW_SUM_PRECEDING - Rolling sum from 5 preceding rows and current row
-ROW_SUM_FOLLOWING - Rolling sum from current row and 5 following rows
-*/
-SELECT TAGNAME, TIMESTAMP, VALUE_NUMERIC AS VALUE,
-    SUM(VALUE_NUMERIC) OVER (
-        PARTITION BY TAGNAME ORDER BY TIMESTAMP
-        ROWS BETWEEN 5 PRECEDING AND CURRENT ROW) AS ROW_SUM_PRECEDING,
-    SUM(VALUE_NUMERIC) OVER (
-        PARTITION BY TAGNAME ORDER BY TIMESTAMP
-        ROWS BETWEEN CURRENT ROW AND 5 FOLLOWING) AS ROW_SUM_FOLLOWING
-FROM HOL_TIMESERIES.ANALYTICS.TS_TAG_READINGS
-WHERE TIMESTAMP >= '2024-01-01 00:00:00'
-AND TIMESTAMP < '2024-01-01 00:00:10'
-AND TAGNAME = '/IOT/SENSOR/TAG301'
-ORDER BY TAGNAME, TIMESTAMP;
-
-/* WINDOW FUNCTIONS - RANGE BETWEEN
-Use Case: Similar to ROWS BETWEEN create a rolling SUM for the time **INTERVAL** five seconds preceding and following, inclusive of the current row.
-
-INTERVAL - Natural time interval inputs that can be subtracted or added to a time based row.
-*/
-SELECT TAGNAME, TIMESTAMP, VALUE_NUMERIC AS VALUE,
-    SUM(VALUE_NUMERIC) OVER (
-        PARTITION BY TAGNAME ORDER BY TIMESTAMP
-        RANGE BETWEEN INTERVAL '5 SEC' PRECEDING AND CURRENT ROW) AS RANGE_SUM_PRECEDING,
-    SUM(VALUE_NUMERIC) OVER (
-        PARTITION BY TAGNAME ORDER BY TIMESTAMP
-        RANGE BETWEEN CURRENT ROW AND INTERVAL '5 SEC' FOLLOWING) AS RANGE_SUM_FOLLOWING
-FROM HOL_TIMESERIES.ANALYTICS.TS_TAG_READINGS
-WHERE TIMESTAMP >= '2024-01-01 00:00:00'
-AND TIMESTAMP < '2024-01-01 00:00:10'
-AND TAGNAME = '/IOT/SENSOR/TAG301'
-ORDER BY TAGNAME, TIMESTAMP;
-
-/* WINDOW FUNCTIONS - RANGE BETWEEN
-Use Case: Create a rolling AVG and SUM for the time **INTERVAL** five minutes preceding, inclusive of the current row.
-
-INTERVAL - 5 MIN AVG and SUM preceding the current row
-*/
-SELECT TAGNAME, TIMESTAMP, VALUE_NUMERIC AS VALUE,
-    AVG(VALUE_NUMERIC) OVER (
-        PARTITION BY TAGNAME ORDER BY TIMESTAMP
-        RANGE BETWEEN INTERVAL '5 MIN' PRECEDING AND CURRENT ROW) AS RANGE_AVG_PRECEDING,
-    SUM(VALUE_NUMERIC) OVER (
-        PARTITION BY TAGNAME ORDER BY TIMESTAMP
-        RANGE BETWEEN INTERVAL '5 MIN' PRECEDING AND CURRENT ROW) AS RANGE_SUM_PRECEDING
-FROM HOL_TIMESERIES.ANALYTICS.TS_TAG_READINGS
-WHERE TIMESTAMP > '2024-01-01 00:00:00'
-AND TIMESTAMP <= '2024-01-01 01:00:00'
-AND TAGNAME = '/IOT/SENSOR/TAG401'
-ORDER BY TAGNAME, TIMESTAMP;
-
-/*
-CHART: Rolling 5 MIN Average and Sum
-
-1. Select the `Chart` sub tab below the worksheet.
-2. Under Data select `VALUE` and set the Aggregation to `MAX`.
-3. Select `+ Add column` and select `RANGE_AVG_PRECEDING` and set Aggregation to `MAX`.
-*/
-
-/* TIME GAP FILLING
-Use Case: Generate timestamps given a start and end time boundary, and join to a tag with less frequent values.
-
-TIME_PERIODS - A variable passed into the query to determine the number of time stamps generated for gap filling.
-*/
-SET TIME_PERIODS = (SELECT TIMESTAMPDIFF('SECOND', '2024-01-01 00:00:00'::TIMESTAMP_NTZ, '2024-01-01 00:00:00'::TIMESTAMP_NTZ + INTERVAL '1 MINUTE'));
-
--- LAST OBSERVED VALUE CARRIED FORWARD (LOCF) - IGNORE NULLS
-WITH TIMES AS (
-    SELECT
-    DATEADD('SECOND', ROW_NUMBER() OVER (ORDER BY SEQ8()) - 1, '2024-01-01')::TIMESTAMP_NTZ AS TIMESTAMP
-    FROM TABLE(GENERATOR(ROWCOUNT => $TIME_PERIODS))
-),
-DATA AS (
-    SELECT TAGNAME, TIMESTAMP, VALUE_NUMERIC AS VALUE,
-    FROM HOL_TIMESERIES.ANALYTICS.TS_TAG_READINGS
-    WHERE TIMESTAMP >= '2024-01-01 00:00:00'
-    AND TIMESTAMP < '2024-01-01 00:01:00'
-    AND TAGNAME = '/IOT/SENSOR/TAG101'
-)
-SELECT TIMES.TIMESTAMP,
-    A.TAGNAME AS TAGNAME,
-    B.VALUE,
-    A.VALUE AS LOCF_VALUE
-FROM TIMES
-LEFT JOIN DATA B ON TIMES.TIMESTAMP = B.TIMESTAMP
-ASOF JOIN DATA A MATCH_CONDITION(TIMES.TIMESTAMP >= A.TIMESTAMP)
-ORDER BY TAGNAME, TIMESTAMP;
-
-/* TIME BINNING - 1 min AGGREGATE with START label
-Use Case: Create a downsampled time series data set with 1 minute aggregates, showing the START timestamp label of the interval.
-
-COUNT - Count of values within the time bin
-SUM - Sum of values within the time bin
-AVG - Average of values (mean) within the time bin
-PERCENTILE_95 - 95% of values are less than this within the time bin
-*/
-SELECT TAGNAME, TIME_SLICE(TIMESTAMP, 1, 'MINUTE', 'START') AS TIMESTAMP,
-    COUNT(*) AS COUNT_VALUE,
-    SUM(VALUE_NUMERIC) AS SUM_VALUE,
-    AVG(VALUE_NUMERIC) AS AVG_VALUE,
-    APPROX_PERCENTILE(VALUE_NUMERIC, 0.95) AS PERCENTILE_95_VALUE
-FROM HOL_TIMESERIES.ANALYTICS.TS_TAG_READINGS
-WHERE TIMESTAMP >= '2024-01-01 00:00:00'
-AND TIMESTAMP < '2024-01-01 00:10:00'
-AND TAGNAME = '/IOT/SENSOR/TAG301'
-GROUP BY TIME_SLICE(TIMESTAMP, 1, 'MINUTE', 'START'), TAGNAME
-ORDER BY TAGNAME, TIMESTAMP;
-
-/* TIME BINNING - 1 min AGGREGATE with END label
-Use Case: Same as before, but now showing the END timestamp label of the interval.
-
-COUNT - Count of values within the time bin
-SUM - Sum of values within the time bin
-AVG - Average of values (mean) within the time bin
-PERCENTILE_95 - 95% of values are less than this within the time bin
-*/
-SELECT TAGNAME, TIME_SLICE(TIMESTAMP, 1, 'MINUTE', 'END') AS TIMESTAMP,
-    COUNT(*) AS COUNT_VALUE,
-    SUM(VALUE_NUMERIC) AS SUM_VALUE,
-    AVG(VALUE_NUMERIC) AS AVG_VALUE,
-    APPROX_PERCENTILE(VALUE_NUMERIC, 0.95) AS PERCENTILE_95_VALUE
-FROM HOL_TIMESERIES.ANALYTICS.TS_TAG_READINGS
-WHERE TIMESTAMP >= '2024-01-01 00:00:00'
-AND TIMESTAMP < '2024-01-01 00:10:00'
-AND TAGNAME = '/IOT/SENSOR/TAG301'
-GROUP BY TIME_SLICE(TIMESTAMP, 1, 'MINUTE', 'END'), TAGNAME
-ORDER BY TAGNAME, TIMESTAMP;
-
-/* ASOF JOIN - Align a 1 second tag with a 5 second tag
-Use Case: Using the `ASOF JOIN`, join two data sets by applying a matching condition to pair closely aligned timestamps and values.
-*/
-SELECT ONE_SEC.TAGNAME AS ONE_SEC_TAGNAME, ONE_SEC.TIMESTAMP AS ONE_SEC_TIMESTAMP, ONE_SEC.VALUE_NUMERIC AS ONE_SEC_VALUE, FIVE_SEC.VALUE_NUMERIC AS FIVE_SEC_VALUE, FIVE_SEC.TAGNAME AS FIVE_SEC_TAGNAME, FIVE_SEC.TIMESTAMP AS FIVE_SEC_TIMESTAMP
-FROM HOL_TIMESERIES.ANALYTICS.TS_TAG_READINGS ONE_SEC
-ASOF JOIN (
-    -- 5 sec tag data
-    SELECT TAGNAME, TIMESTAMP, VALUE_NUMERIC
-    FROM HOL_TIMESERIES.ANALYTICS.TS_TAG_READINGS
-    WHERE TAGNAME = '/IOT/SENSOR/TAG101'
-    ) FIVE_SEC
-MATCH_CONDITION(ONE_SEC.TIMESTAMP >= FIVE_SEC.TIMESTAMP)
-WHERE ONE_SEC.TAGNAME = '/IOT/SENSOR/TAG301'
-AND ONE_SEC.TIMESTAMP >= '2024-01-01 00:00:00'
-AND ONE_SEC.TIMESTAMP < '2024-01-01 00:01:00'
-ORDER BY ONE_SEC.TIMESTAMP;
 
 /*
 ANALYSIS SCRIPT COMPLETED
