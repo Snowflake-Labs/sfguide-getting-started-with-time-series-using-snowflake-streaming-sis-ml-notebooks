@@ -65,7 +65,10 @@ GROUP BY TAGNAME
 ORDER BY TAGNAME;
 
 /* RELATIVE FREQUENCY
-Find the value that occurs most frequently within a time frame.
+Consider the use case of calculating the frequency and relative frequency of each value within a specific time frame,
+to determine how often the value occurs.
+
+Find the value that occurs most frequently within a time frame. 
 */
 SELECT 
     TAGNAME,
@@ -133,7 +136,11 @@ GROUP BY TAGNAME
 ORDER BY TAGNAME;
 
 /* WATERMARKS
-Retrieve both the high watermark (latest time stamped value) and low watermark (earliest time stamped value) readings within the time boundary.
+Consider the use case of **determining a sensor variance over time** by calculating the latest (high watermark)
+and earliest (low watermark) readings within a time boundary.
+
+Retrieve both the high watermark (latest time stamped value) and low watermark (earliest time stamped value)
+readings within the time boundary.
 
 MAX_BY - High Watermark - latest reading in the time boundary
 MIN_BY - Low Watermark - earliest reading in the time boundary
