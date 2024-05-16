@@ -73,5 +73,13 @@ CROSS JOIN TABLE(HOL_TIMESERIES.ANALYTICS.FUNCTION_TS_LTTB(DATE_PART(EPOCH_NANOS
 ORDER BY TAGNAME, TIMESTAMP;
 
 /*
+CHART: LTTB Query
+
+1. Select the `Chart` sub tab below the worksheet.
+2. Under Data select `VALUE` and set the Aggregation to `Max`.
+3. Under Data select `TIMESTAMP` and set the Bucketing to `Minute`. 
+*/
+
+/*
 FUNCTION QUERIES SCRIPT COMPLETED
 */
