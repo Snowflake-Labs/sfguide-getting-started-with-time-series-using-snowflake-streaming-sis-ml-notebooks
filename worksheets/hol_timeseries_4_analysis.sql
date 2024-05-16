@@ -286,8 +286,8 @@ ORDER BY TAGNAME, TIMESTAMP;
 CHART: Rolling 5 MIN Average and Sum
 
 1. Select the `Chart` sub tab below the worksheet.
-2. Under Data select `VALUE` column and set the Aggregation to `MAX`.
-3. Select `+ Add column` and select `RANGE_AVG_PRECEDING` and set Aggregation to `MAX`.
+2. Under Data select `VALUE` column and set the Aggregation to `Max`.
+3. Select `+ Add column` and select `RANGE_AVG_PRECEDING` and set Aggregation to `Max`.
 */
 
 /* TIME BINNING - 5 min AGGREGATE with START and END label
