@@ -292,6 +292,11 @@ AND TAGNAME = '/IOT/SENSOR/TAG101'
 ORDER BY TAGNAME, TIMESTAMP;
 
 /*
+The first minute of data aligns for both RANGE BETWEEN and ROWS BETWEEN, however, after the first minute
+the rolling values will start to show variances due to the introduced time gaps.
+*/
+
+/*
 CHART: Rolling 1 MIN Average and Sum - showing differences between RANGE BETWEEN and ROWS BETWEEN
 
 1. Select the `Chart` sub tab below the worksheet.
