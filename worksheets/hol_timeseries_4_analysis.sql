@@ -241,20 +241,22 @@ ORDER BY TAGNAME, TIMESTAMP;
 /* SENSOR WITH TIME GAPS
 Now assume a scenario, where there are time gaps or missing data received from a sensor.
 Such as a sensor that sends roughly every 5 seconds, or if a sensor experiences a fault.
+
+In this example I am using DATE_PART to exclude seconds 20, 45, and 55 from the data.
 */
 SELECT TAGNAME, TIMESTAMP, VALUE_NUMERIC AS VALUE
 FROM HOL_TIMESERIES.ANALYTICS.TS_TAG_READINGS
 WHERE TIMESTAMP >= '2024-01-01 00:00:00'
 AND TIMESTAMP < '2024-01-01 00:02:00'
 AND TAGNAME = '/IOT/SENSOR/TAG101'
+AND DATE_PART('SECOND', TIMESTAMP) NOT IN (20, 45, 55)
 ORDER BY TAGNAME, TIMESTAMP;
 
 /* WINDOW FUNCTIONS - RANGE BETWEEN
-Now say you want to perform an aggregation to calculate the 5 minute rolling average of sensor readings,
+Now say you want to perform an aggregation to calculate the 1 minute rolling average of sensor readings,
 over a specific time frame to detect trends and patterns in the data. 
 
-ROWS BETWEEN would require additional calculation to determine the number of rows that make up the 5 minute interval,
-and may NOT yield correct results if the sensor data arrives at INCONSISTENT times.
+ROWS BETWEEN may NOT yield correct results, as the number of rows that make up the 1 minute interval is inconsistent.
 
 This is where **RANGE BETWEEN** can be used with intervals of time that can be added or subtracted from timestamps.
 
@@ -263,9 +265,43 @@ RANGE BETWEEN differs from ROWS BETWEEN in that it can:
     For example, if a sensor is faulty or send data at incosistent intervals.
 
 * Allow for reporting frequencies that differ from the data frequency.
-    For example, data at 5 second frequency that you want to aggregate the prior 5 minutes.
+    For example, data at 5 second frequency that you want to aggregate the prior 1 minute.
 
-Create a rolling AVG and SUM for the time INTERVAL five minutes preceding, inclusive of the current row.
+Create a rolling AVG and SUM for the time INTERVAL 1 minutes preceding, inclusive of the current row.
+
+INTERVAL - 1 MIN AVG and SUM preceding the current row - showing differences between RANGE BETWEEN AND ROWS BETWEEN
+*/
+SELECT TAGNAME, TIMESTAMP, VALUE_NUMERIC AS VALUE,
+    AVG(VALUE_NUMERIC) OVER (
+        PARTITION BY TAGNAME ORDER BY TIMESTAMP
+        RANGE BETWEEN INTERVAL '1 MIN' PRECEDING AND CURRENT ROW) AS RANGE_AVG_1MIN,
+    AVG(VALUE_NUMERIC) OVER (
+        PARTITION BY TAGNAME ORDER BY TIMESTAMP
+        ROWS BETWEEN 12 PRECEDING AND CURRENT ROW) AS ROW_AVG_1MIN,
+    SUM(VALUE_NUMERIC) OVER (
+        PARTITION BY TAGNAME ORDER BY TIMESTAMP
+        RANGE BETWEEN INTERVAL '1 MIN' PRECEDING AND CURRENT ROW) AS RANGE_SUM_1MIN,
+    SUM(VALUE_NUMERIC) OVER (
+        PARTITION BY TAGNAME ORDER BY TIMESTAMP
+        ROWS BETWEEN 12 PRECEDING AND CURRENT ROW) AS ROW_SUM_1MIN
+FROM HOL_TIMESERIES.ANALYTICS.TS_TAG_READINGS
+WHERE TIMESTAMP >= '2024-01-01 00:00:00'
+AND TIMESTAMP <= '2024-01-01 01:00:00'
+AND DATE_PART('SECOND', TIMESTAMP) NOT IN (20, 45, 55)
+AND TAGNAME = '/IOT/SENSOR/TAG101'
+ORDER BY TAGNAME, TIMESTAMP;
+
+/*
+CHART: Rolling 1 MIN Average and Sum - showing differences between RANGE BETWEEN and ROWS BETWEEN
+
+1. Select the `Chart` sub tab below the worksheet.
+2. Under Data select the `VALUE` column and set the Aggregation to `Max`.
+3. Select `+ Add column` and select `RANGE_AVG_1MIN` and set Aggregation to `Max`.
+4. Select `+ Add column` and select `ROW_AVG_1MIN` and set Aggregation to `Max`.
+*/
+
+/* WINDOW FUNCTIONS - RANGE BETWEEN
+Let's expand on RANGE BETWEEN and create a rolling AVG and SUM for the time **INTERVAL** five minutes preceding, inclusive of the current row.
 
 INTERVAL - 5 MIN AVG and SUM preceding the current row
 */
@@ -277,17 +313,22 @@ SELECT TAGNAME, TIMESTAMP, VALUE_NUMERIC AS VALUE,
         PARTITION BY TAGNAME ORDER BY TIMESTAMP
         RANGE BETWEEN INTERVAL '5 MIN' PRECEDING AND CURRENT ROW) AS RANGE_SUM_5MIN
 FROM HOL_TIMESERIES.ANALYTICS.TS_TAG_READINGS
-WHERE TIMESTAMP > '2024-01-01 00:00:00'
+WHERE TIMESTAMP >= '2024-01-01 00:00:00'
 AND TIMESTAMP <= '2024-01-01 01:00:00'
 AND TAGNAME = '/IOT/SENSOR/TAG101'
 ORDER BY TAGNAME, TIMESTAMP;
 
 /*
-CHART: Rolling 5 MIN Average and Sum
+CHART: Rolling 5 MIN Average
 
 1. Select the `Chart` sub tab below the worksheet.
-2. Under Data select `VALUE` column and set the Aggregation to `Max`.
-3. Select `+ Add column` and select `RANGE_AVG_PRECEDING` and set Aggregation to `Max`.
+2. Under Data select the `VALUE` column and set the Aggregation to `Max`.
+3. Select `+ Add column` and select `RANGE_AVG_5MIN` and set Aggregation to `Max`.
+*/
+
+/* DOWNSAMPLING
+Downsampling is used to decrease the frequency of time samples, such as from seconds to minutes,
+by placing time series data into fixed time intervals using aggregate operations on the existing values within each time interval.
 */
 
 /* TIME BINNING - 5 min AGGREGATE with START and END label
