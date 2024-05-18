@@ -19,12 +19,18 @@ COMMENT = 'IOTSTREAM staging table.'
 
 /* EXTERNAL ACTIVITY
 
-Run IOT Stream client
+Run IOT Stream client Test - /iotstream/Test.sh
 
 */
 
 -- Show stream channels connections
 SHOW CHANNELS;
+
+/* EXTERNAL ACTIVITY
+
+Run IOT Stream client Load - /iotstream/Run_MAX.sh
+
+*/
 
 -- Check stream table data
 SELECT * FROM HOL_TIMESERIES.STAGING.RAW_TS_IOTSTREAM_DATA LIMIT 10;

@@ -329,6 +329,9 @@ CHART: Rolling 5 MIN Average
 1. Select the `Chart` sub tab below the worksheet.
 2. Under Data select the `VALUE` column and set the Aggregation to `Max`.
 3. Select `+ Add column` and select `RANGE_AVG_5MIN` and set Aggregation to `Max`.
+
+A rolling average could be useful in scenarios where you are trying to detect
+EXCEEDANCES in equipment operating limits over periods of time, such as a maximum pressure limit.
 */
 
 /* DOWNSAMPLING

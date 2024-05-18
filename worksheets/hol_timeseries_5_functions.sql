@@ -113,7 +113,7 @@ FROM
 $$;
 
 
--- Add helper precedure to accept start and end times, and return either LOCF or Linear Interpolated Values
+-- Add helper procedure to accept start and end times, and return either LOCF or Linear Interpolated Values
 CREATE OR REPLACE PROCEDURE HOL_TIMESERIES.ANALYTICS.PROCEDURE_TS_INTERPOLATE (
     V_TAGLIST VARCHAR,
     V_FROM_TIME TIMESTAMP_NTZ,

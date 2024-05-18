@@ -14,8 +14,9 @@ SELECT * FROM TABLE(HOL_TIMESERIES.ANALYTICS.FUNCTION_TS_INTERPOLATE('/IOT/SENSO
 CHART: Interpolation - Linear and LOCF
 
 1. Select the `Chart` sub tab below the worksheet.
-2. Under Data select `INTERP_VALUE` and set the Aggregation to `Max`.
-3. Select `+ Add column` and select `LOCF_VALUE` and set Aggregation to `Max`.
+2. Under Data select `TIMESTAMP` and set Bucketing to `Second`
+3. Under Data select `INTERP_VALUE` and set the Aggregation to `Max`.
+4. Select `+ Add column` and select `LOCF_VALUE` and set Aggregation to `Max`.
 */
 
 -- Call Interpolate Procedure with Taglist, Start Time, End Time, and Intervals - LOCF Interpolate
@@ -60,13 +61,29 @@ CHART: Interpolation - LINEAR
 2. Under Data select `VALUE` and set the Aggregation to `Max`.
 */
 
+-- RAW
+SELECT TAGNAME, TIMESTAMP, VALUE_NUMERIC as VALUE
+FROM HOL_TIMESERIES.ANALYTICS.TS_TAG_READINGS
+WHERE TIMESTAMP > '2024-01-09 21:00:00'
+AND TIMESTAMP <= '2024-01-09 23:00:00'
+AND TAGNAME = '/IOT/SENSOR/TAG301'
+ORDER BY TAGNAME, TIMESTAMP;
+
+/*
+CHART: Raw
+
+1. Select the `Chart` sub tab below the worksheet.
+2. Under Data select `VALUE` and set the Aggregation to `Max`.
+3. Under Data select `TIMESTAMP` and set the Bucketing to `Second`. 
+*/
+
 -- LTTB
 SELECT DATA.TAGNAME, LTTB.TIMESTAMP::VARCHAR::TIMESTAMP_NTZ AS TIMESTAMP, LTTB.VALUE 
 FROM (
-    SELECT TAGNAME, TIMESTAMP, VALUE_NUMERIC AS VALUE
+    SELECT TAGNAME, TIMESTAMP, VALUE_NUMERIC as VALUE
     FROM HOL_TIMESERIES.ANALYTICS.TS_TAG_READINGS
-    WHERE TIMESTAMP > '2024-01-01 00:00:00'
-    AND TIMESTAMP <= '2024-02-01 00:00:30'
+    WHERE TIMESTAMP > '2024-01-09 21:00:00'
+    AND TIMESTAMP <= '2024-01-09 23:00:00'
     AND TAGNAME = '/IOT/SENSOR/TAG301'
 ) AS DATA 
 CROSS JOIN TABLE(HOL_TIMESERIES.ANALYTICS.FUNCTION_TS_LTTB(DATE_PART(EPOCH_NANOSECOND, DATA.TIMESTAMP), DATA.VALUE, 500) OVER (PARTITION BY DATA.TAGNAME ORDER BY DATA.TIMESTAMP)) AS LTTB
@@ -77,7 +94,7 @@ CHART: LTTB Query
 
 1. Select the `Chart` sub tab below the worksheet.
 2. Under Data select `VALUE` and set the Aggregation to `Max`.
-3. Under Data select `TIMESTAMP` and set the Bucketing to `Minute`. 
+3. Under Data select `TIMESTAMP` and set the Bucketing to `Second`. 
 */
 
 /*
