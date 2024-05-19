@@ -409,5 +409,85 @@ ASOF JOIN DATA A MATCH_CONDITION(TIMES.TIMESTAMP >= A.TIMESTAMP) ON TIMES.TAGNAM
 ORDER BY TAGNAME, TIMESTAMP;
 
 /*
+Time Series Forecasting
+
+Time-Series Forecasting employs a machine learning algorithm to predict future data by using historical time series data.
+
+Forecasting is part of Snowflake Cortex, Snowflake’s intelligent, fully-managed AI and ML service.
+This feature is part of the Snowflake Cortex ML function suite.
+
+Generate a time series forecast for a single tag looking forward one day.
+*/
+
+/* FORECAST DATA - Training Data Set - /IOT/SENSOR/TAG401
+A single tag of data for two weeks.
+
+Create a forecast training data view from historical data.
+*/
+CREATE OR REPLACE VIEW HOL_TIMESERIES.ANALYTICS.TS_TAG_READINGS_401 AS
+SELECT TAGNAME, TIMESTAMP, VALUE_NUMERIC AS VALUE
+FROM HOL_TIMESERIES.ANALYTICS.TS_TAG_READINGS
+WHERE TAGNAME = '/IOT/SENSOR/TAG401'
+ORDER BY TAGNAME, TIMESTAMP;
+
+/* FORECAST MODEL - Training Data Set - /IOT/SENSOR/TAG401
+Create a Time-Series Forecast model using the training data view.
+
+INPUT_DATA - The data set used for training the forecast model
+SERIES_COLUMN - The column that splits multiple series of data, such as different TAGNAMES
+TIMESTAMP_COLNAME - The column containing the Time Series times
+TARGET_COLNAME - The column containing the target value
+*/
+CREATE OR REPLACE SNOWFLAKE.ML.FORECAST HOL_TIMESERIES_FORECAST(
+    INPUT_DATA => SYSTEM$REFERENCE('VIEW', 'HOL_TIMESERIES.ANALYTICS.TS_TAG_READINGS_401'),
+    SERIES_COLNAME => 'TAGNAME',
+    TIMESTAMP_COLNAME => 'TIMESTAMP',
+    TARGET_COLNAME => 'VALUE'
+);
+
+/* FORECAST MODEL OUTPUT - Forecast for 1 Day
+Test Forecasting model output for one day.
+
+SERIES_VALUE - Defines the series being forecasted - for example the specific tag
+FORECASTING_PERIODS - The number of periods being forecasted
+*/
+CALL HOL_TIMESERIES_FORECAST!FORECAST(SERIES_VALUE => TO_VARIANT('/IOT/SENSOR/TAG401'), FORECASTING_PERIODS => 1440);
+
+/* FORECAST COMBINED - Combined ACTUAL and FORECAST data
+Create a forecast analysis combining historical data with forecast data.
+
+UNION the historical ACTUAL data with the FORECAST data using RESULT_SCAN
+*/
+SELECT
+    'ACTUAL' AS DATASET,
+    TAGNAME,
+    TIMESTAMP,
+    VALUE,
+    NULL AS FORECAST,
+    NULL AS UPPER
+FROM HOL_TIMESERIES.ANALYTICS.TS_TAG_READINGS_401
+WHERE TAGNAME = '/IOT/SENSOR/TAG401'
+AND TO_DATE(TIMESTAMP) = '2024-01-14'
+UNION ALL
+SELECT
+    'FORECAST' AS DATASET,
+    SERIES AS TAGNAME,
+    TS AS TIMESTAMP,
+    NULL AS VALUE,
+    FORECAST,
+    UPPER_BOUND AS UPPER
+FROM TABLE(RESULT_SCAN(-1))
+ORDER BY DATASET, TAGNAME, TIMESTAMP;
+
+/*
+CHART: Time Series Forecast
+
+1. Select the `Chart` sub tab below the worksheet.
+2. Under Data set the first column to `VALUE` and set the Aggregation to `Max`.
+3. Select the `TIMESTAMP` column and set the Bucketing to `Minute`.
+4. Select `+ Add column` and select `FORECAST` and set Aggregation to `Max`.
+*/
+
+/*
 ANALYSIS SCRIPT COMPLETED
 */
