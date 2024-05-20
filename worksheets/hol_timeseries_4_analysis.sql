@@ -352,6 +352,9 @@ by placing time series data into fixed time intervals using aggregate operations
 */
 
 /* TIME BINNING - 5 min AGGREGATE with START and END label
+Consider a use case where you want to obtain a broader view of a high frequency pressure gauge,
+by aggregating data into evenly spaced intervals to find trends over time.
+
 Create a downsampled time series data set with 5 minute aggregates, showing the START and END timestamp label of each interval.
 
 COUNT - Count of values within the time bin
@@ -374,7 +377,9 @@ GROUP BY TIME_SLICE(TIMESTAMP, 5, 'MINUTE', 'START'), TIME_SLICE(TIMESTAMP, 5, '
 ORDER BY TAGNAME, START_TIMESTAMP;
 
 /* ASOF JOIN - Align a 1 second tag with a 5 second tag
-Using the `ASOF JOIN`, join two data sets by applying a matching condition to pair closely aligned timestamps and values.
+Consider the use case where you want to align a one second and five second pressure gauge to determine if there is a correlation.
+
+Using the `ASOF JOIN`, join two data sets by applying a `MATCH_CONDITION` to pair closely aligned timestamps and values.
 */
 SELECT ONE_SEC.TAGNAME AS ONE_SEC_TAGNAME, ONE_SEC.TIMESTAMP AS ONE_SEC_TIMESTAMP, ONE_SEC.VALUE_NUMERIC AS ONE_SEC_VALUE, FIVE_SEC.VALUE_NUMERIC AS FIVE_SEC_VALUE, FIVE_SEC.TAGNAME AS FIVE_SEC_TAGNAME, FIVE_SEC.TIMESTAMP AS FIVE_SEC_TIMESTAMP
 FROM HOL_TIMESERIES.ANALYTICS.TS_TAG_READINGS ONE_SEC
@@ -386,9 +391,18 @@ ASOF JOIN (
     ) FIVE_SEC
 MATCH_CONDITION(ONE_SEC.TIMESTAMP >= FIVE_SEC.TIMESTAMP)
 WHERE ONE_SEC.TAGNAME = '/IOT/SENSOR/TAG301'
-AND ONE_SEC.TIMESTAMP >= '2024-01-01 00:00:00'
-AND ONE_SEC.TIMESTAMP < '2024-01-01 00:01:00'
+AND ONE_SEC.TIMESTAMP >= '2024-01-03 09:15:00'
+AND ONE_SEC.TIMESTAMP <= '2024-01-03 09:45:00'
 ORDER BY ONE_SEC.TIMESTAMP;
+
+/*
+CHART: Aligned Time Series Data
+
+1. Select the `Chart` sub tab below the worksheet.
+2. Under Data set the first Data column to `ONE_SEC_VALUE` with an Aggregation of `Max`.
+3. Set the X-Axis to `ONE_SEC_TIMESTAMP` and a Bucketing of `Second`
+3. Select `+ Add column` and select `FIVE_SEC_VALUE` and set Aggregation to `Max`.
+*/
 
 /* TIME GAP FILLING
 Generate timestamps given a start and end time boundary, and join to a tag with less frequent values.

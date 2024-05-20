@@ -7,7 +7,9 @@ USE ROLE ROLE_HOL_TIMESERIES;
 USE HOL_TIMESERIES.ANALYTICS;
 USE WAREHOUSE HOL_ANALYTICS_WH;
 
--- Directly Call Table Function
+/* INTERPOLATE TABLE FUNCTION
+The Interpolation table function will return both the last observed value carried forward (LOCF) and linear interpolated values (default).
+*/
 SELECT * FROM TABLE(HOL_TIMESERIES.ANALYTICS.FUNCTION_TS_INTERPOLATE('/IOT/SENSOR/TAG401', '2024-01-01 12:10:00'::TIMESTAMP_NTZ, '2024-01-01 13:10:00'::TIMESTAMP_NTZ, 10, 362)) ORDER BY TAGNAME, TIMESTAMP;
 
 /*
@@ -19,7 +21,12 @@ CHART: Interpolation - Linear and LOCF
 4. Select `+ Add column` and select `LOCF_VALUE` and set Aggregation to `Max`.
 */
 
--- Call Interpolate Procedure with Taglist, Start Time, End Time, and Intervals - LOCF Interpolate
+/* INTERPOLATE PROCEDURE - LOCF
+The Interpolation Procedure will accept a start time and end time, along with a bucket interval size in seconds.
+It will then calculate the number of buckets within the time boundary, and call the Interpolate table function.
+
+Call Interpolate Procedure with Taglist, Start Time, End Time, and Intervals - LOCF Interpolate
+*/
 CALL HOL_TIMESERIES.ANALYTICS.PROCEDURE_TS_INTERPOLATE(
     -- V_TAGLIST
     '/IOT/SENSOR/TAG401',
@@ -40,7 +47,11 @@ CHART: Interpolation - LOCF
 2. Under Data select `VALUE` and set the Aggregation to `Max`.
 */
 
--- Call Interpolate Procedure with Taglist, Start Time, End Time, and Intervals - LINEAR Interpolate
+/* INTERPOLATE PROCEDURE - LOCF
+Similar to the Interpolation - LOCF procedure call, this will create a Linear Interpolation return.
+
+Call Interpolate Procedure with Taglist, Start Time, End Time, and Intervals - LINEAR Interpolate
+*/
 CALL HOL_TIMESERIES.ANALYTICS.PROCEDURE_TS_INTERPOLATE(
     -- V_TAGLIST
     '/IOT/SENSOR/TAG401',
@@ -61,7 +72,20 @@ CHART: Interpolation - LINEAR
 2. Under Data select `VALUE` and set the Aggregation to `Max`.
 */
 
--- RAW
+/*
+LTTB Query
+
+The Largest Triangle Three Buckets (LTTB) algorithm is a time series downsampling algorithm that
+reduces the number of visual data points, whilst retaining the shape and variability of the time series data.
+
+Starting with a RAW query we can see the LTTB function in action, 
+where the function will downsample two hours of data for a one second tag,
+7200 data points to 500 whilst keeping the shape and variability of the values.
+*/
+
+/* RAW - 2 HOURS OF 1 SEC DATA
+Source of downsample - 7200 data points
+*/
 SELECT TAGNAME, TIMESTAMP, VALUE_NUMERIC as VALUE
 FROM HOL_TIMESERIES.ANALYTICS.TS_TAG_READINGS
 WHERE TIMESTAMP > '2024-01-09 21:00:00'
@@ -77,7 +101,12 @@ CHART: Raw
 3. Under Data select `TIMESTAMP` and set the Bucketing to `Second`. 
 */
 
--- LTTB
+/* LTTB - DOWNSAMPLE TO 500 DATA POINTS
+We can now pass the same data into the LTTB table function and request 500 data points to be returned.
+
+The DATA subquery sets up the data set, and this is cross joined with the LTTB table function,
+with an input of TIMESTAMP, VALUE, and the downsample size of 500.
+*/
 SELECT DATA.TAGNAME, LTTB.TIMESTAMP::VARCHAR::TIMESTAMP_NTZ AS TIMESTAMP, LTTB.VALUE 
 FROM (
     SELECT TAGNAME, TIMESTAMP, VALUE_NUMERIC as VALUE
