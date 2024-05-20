@@ -39,7 +39,7 @@ GROUP BY TAGNAME
 ORDER BY TAGNAME;
 
 /* MIN/MAX/AVG/SUM
-Retrieve statistical aggregates for the readings within the time boundary.
+Retrieve statistical aggregates for the readings within the time boundary using math operations.
 
 MIN - Minimum value
 MAX - Maximum value
@@ -95,8 +95,8 @@ and multiple aggregations can be grouped together using unions.
 /* DISTRIBUTIONS - sample distributions statistics
 Retrieve distribution sample statistics within the time boundary.
 
-PERCENTILE_50 - 50% of values are less than this
-PERCENTILE_95 - 95% of values are less than this
+PERCENTILE_50 - 50% of values are less than this value.
+PERCENTILE_95 - 95% of values are less than this value.
 STDDEV - Closeness to the mean/average of the distribution.
 VARIANCE - Spread between numbers in the time boundary.
 KURTOSIS - Measure of outliers occuring.
