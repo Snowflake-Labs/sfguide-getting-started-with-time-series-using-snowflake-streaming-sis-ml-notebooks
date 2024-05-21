@@ -455,10 +455,9 @@ Time Series Forecasting
 Time-Series Forecasting employs a machine learning algorithm to predict future data by using historical time series data.
 
 Forecasting is part of Snowflake Cortex, Snowflake’s intelligent, fully-managed AI and ML service.
-This feature is part of the Snowflake Cortex ML function suite.
 
-Generate a time series forecast for a single tag looking forward one day for a flow sensor.
-This could be useful in tracking expected production output.
+Consider a use case where you want to predict expected production output based on a flow sensor.
+In this case, you could generate a time series forecast for a single tag looking forward one day for a flow sensor.
 */
 
 /* FORECAST DATA - Training Data Set - /IOT/SENSOR/TAG401
