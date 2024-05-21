@@ -407,8 +407,6 @@ CHART: Aligned Time Series Data
 */
 
 /* GAP FILLING
-Gap Filling
-
 Time gap filling is the process of generating timestamps for a given start and end time boundary,
 and joining to a tag with less frequent timestamp values, and filling missing / gap timestamps with a prior value.
 
@@ -416,7 +414,7 @@ This can also be referred to as Upsampling or Forward Filling.
 */
 
 /* GAP FILLING - 1 SEC TIMESTAMPS WITH 5 SEC TAG
-Generate timestamps given a start and end time boundary, and us ASOF JOIN to a tag with less frequent values to forward fill using last observed value carried forward (LOCF).
+Generate timestamps given a start and end time boundary, and use ASOF JOIN to a tag dataset with less frequent values, to forward fill using last observed value carried forward (LOCF).
 
 TIME_PERIODS - A variable passed into the query to determine the number of time stamps generated for gap filling.
 */
@@ -456,7 +454,8 @@ Time-Series Forecasting employs a machine learning algorithm to predict future d
 Forecasting is part of Snowflake Cortex, Snowflake’s intelligent, fully-managed AI and ML service.
 This feature is part of the Snowflake Cortex ML function suite.
 
-Generate a time series forecast for a single tag looking forward one day.
+Generate a time series forecast for a single tag looking forward one day for a flow sensor.
+This could be useful in tracking expected production output.
 */
 
 /* FORECAST DATA - Training Data Set - /IOT/SENSOR/TAG401
@@ -477,6 +476,8 @@ INPUT_DATA - The data set used for training the forecast model
 SERIES_COLUMN - The column that splits multiple series of data, such as different TAGNAMES
 TIMESTAMP_COLNAME - The column containing the Time Series times
 TARGET_COLNAME - The column containing the target value
+
+Training the Time Series Forecast model** may take 2-3 minutes in this case.
 */
 CREATE OR REPLACE SNOWFLAKE.ML.FORECAST HOL_TIMESERIES_FORECAST(
     INPUT_DATA => SYSTEM$REFERENCE('VIEW', 'HOL_TIMESERIES.ANALYTICS.TS_TAG_READINGS_401'),
@@ -526,6 +527,8 @@ CHART: Time Series Forecast
 2. Under Data set the first column to `VALUE` and set the Aggregation to `Max`.
 3. Select the `TIMESTAMP` column and set the Bucketing to `Minute`.
 4. Select `+ Add column` and select `FORECAST` and set Aggregation to `Max`.
+
+The chart will show a flow sensor with ACTUALS and FORECAST values.
 */
 
 /*
