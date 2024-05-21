@@ -250,6 +250,13 @@ AND TIMESTAMP < '2024-01-01 00:01:00'
 AND TAGNAME = '/IOT/SENSOR/TAG301'
 ORDER BY TAGNAME, TIMESTAMP;
 
+/*
+Snowsight Statistics
+
+Snowsight will provide high level statistics and histograms for columns of data,
+as well as selected cells of numerical data, to the right of the returned result set.
+*/
+
 /* SENSOR WITH TIME GAPS
 Now assume a scenario, where there are time gaps or missing data received from a sensor.
 Such as a sensor that sends roughly every 5 seconds, or if a sensor experiences a fault.
