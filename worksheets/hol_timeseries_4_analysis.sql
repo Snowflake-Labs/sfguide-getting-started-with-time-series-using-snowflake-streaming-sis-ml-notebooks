@@ -404,6 +404,9 @@ CHART: Aligned Time Series Data
 2. Under Data set the first Data column to `ONE_SEC_VALUE` with an Aggregation of `Max`.
 3. Set the X-Axis to `ONE_SEC_TIMESTAMP` and a Bucketing of `Second`
 3. Select `+ Add column` and select `FIVE_SEC_VALUE` and set Aggregation to `Max`.
+
+One sensor is showing a significant drop whilst the other is showing an increase to a peak at similar times,
+which could potentially be an anomoly.
 */
 
 /* GAP FILLING
