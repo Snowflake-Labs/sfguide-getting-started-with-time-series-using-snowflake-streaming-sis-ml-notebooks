@@ -253,7 +253,7 @@ ORDER BY TAGNAME, TIMESTAMP;
 /*
 Snowsight Statistics
 
-Snowsight will provide high level statistics and histograms for columns of data,
+Snowflake Snowsight will provide high level statistics and histograms for columns of data,
 as well as selected cells of numerical data, to the right of the returned result set.
 */
 
