@@ -19,6 +19,8 @@ CHART: Interpolation - Linear and LOCF
 2. Under Data select `TIMESTAMP` and set Bucketing to `Second`
 3. Under Data select `INTERP_VALUE` and set the Aggregation to `Max`.
 4. Select `+ Add column` and select `LOCF_VALUE` and set Aggregation to `Max`.
+
+The chart will display a both linear and a step-based pattern for interpolated values between data points.
 */
 
 /* INTERPOLATE PROCEDURE - LOCF
@@ -45,6 +47,8 @@ CHART: Interpolation - LOCF
 
 1. Select the `Chart` sub tab below the worksheet.
 2. Under Data select `VALUE` and set the Aggregation to `Max`.
+
+The chart will display a step-based pattern where the prior value is interpolated between data points.
 */
 
 /* INTERPOLATE PROCEDURE - LOCF
@@ -70,6 +74,8 @@ CHART: Interpolation - LINEAR
 
 1. Select the `Chart` sub tab below the worksheet.
 2. Under Data select `VALUE` and set the Aggregation to `Max`.
+
+The chart will display a smoother linear interpolated value between data points.
 */
 
 /*
@@ -98,7 +104,9 @@ CHART: Raw
 
 1. Select the `Chart` sub tab below the worksheet.
 2. Under Data select `VALUE` and set the Aggregation to `Max`.
-3. Under Data select `TIMESTAMP` and set the Bucketing to `Second`. 
+3. Under Data select `TIMESTAMP` and set the Bucketing to `Second`.
+
+7200 Data Points
 */
 
 /* LTTB - DOWNSAMPLE TO 500 DATA POINTS
@@ -123,7 +131,9 @@ CHART: LTTB Query
 
 1. Select the `Chart` sub tab below the worksheet.
 2. Under Data select `VALUE` and set the Aggregation to `Max`.
-3. Under Data select `TIMESTAMP` and set the Bucketing to `Second`. 
+3. Under Data select `TIMESTAMP` and set the Bucketing to `Second`.
+
+500 Data Points - The shape and variability of the values are retained, when compared to the 7200 data point RAW chart.
 */
 
 /*
