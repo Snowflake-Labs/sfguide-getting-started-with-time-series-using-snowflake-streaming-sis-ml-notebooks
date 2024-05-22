@@ -25,9 +25,10 @@ The chart will display both LINEAR and LOCF for interpolated values between data
 
 /* INTERPOLATE PROCEDURE - LOCF
 The Interpolation Procedure will accept a start time and end time, along with a bucket interval size in seconds.
+
 It will then calculate the number of buckets within the time boundary, and call the Interpolate table function.
 
-Call Interpolate Procedure with Taglist, Start Time, End Time, and Intervals - LOCF Interpolate
+Call Interpolate Procedure with Taglist, Start Time, End Time, and Intervals, with `LOCF` Interpolate type.
 */
 CALL HOL_TIMESERIES.ANALYTICS.PROCEDURE_TS_INTERPOLATE(
     -- V_TAGLIST
@@ -51,10 +52,10 @@ CHART: Interpolation - LOCF
 The chart will display a LOCF value where the prior value is interpolated between data points.
 */
 
-/* INTERPOLATE PROCEDURE - LOCF
-Similar to the Interpolation - LOCF procedure call, this will create a Linear Interpolation table.
+/* INTERPOLATE PROCEDURE - LINEAR
+Similar to the LOCF interpolation procedure call, this will create a Linear Interpolation table.
 
-Call Interpolate Procedure with Taglist, Start Time, End Time, and Intervals - LINEAR Interpolate
+Call Interpolate Procedure with Taglist, Start Time, End Time, and Intervals, with `LINEAR` Interpolate type.
 */
 CALL HOL_TIMESERIES.ANALYTICS.PROCEDURE_TS_INTERPOLATE(
     -- V_TAGLIST
