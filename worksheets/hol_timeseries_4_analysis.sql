@@ -385,6 +385,11 @@ AND TAGNAME = '/IOT/SENSOR/TAG301'
 GROUP BY TIME_SLICE(TIMESTAMP, 5, 'MINUTE', 'START'), TIME_SLICE(TIMESTAMP, 5, 'MINUTE', 'END'), TAGNAME
 ORDER BY TAGNAME, START_TIMESTAMP;
 
+/* TIME BINNING - 5 min AGGREGATE RESULTS
+For a one second tag (3600 data points over an hour), the results will show in five minute intervals
+containing 300 data points each, along with aggregates for counts, sum, average, and 95th percentile values
+*/
+
 /* ASOF JOIN - Align a 1 second tag with a 5 second tag
 Consider the use case where you want to align a one second and five second pressure gauge to determine if there is a correlation.
 
