@@ -8,7 +8,7 @@ USE HOL_TIMESERIES.ANALYTICS;
 USE WAREHOUSE HOL_ANALYTICS_WH;
 
 /* INTERPOLATE TABLE FUNCTION
-The Interpolation table function will return both the last observed value carried forward (LOCF) and linear interpolated values (default).
+The Interpolation table function will return both the linear interpolated values and last observed value carried forward (LOCF).
 */
 SELECT * FROM TABLE(HOL_TIMESERIES.ANALYTICS.FUNCTION_TS_INTERPOLATE('/IOT/SENSOR/TAG401', '2024-01-01 12:10:00'::TIMESTAMP_NTZ, '2024-01-01 13:10:00'::TIMESTAMP_NTZ, 10, 362)) ORDER BY TAGNAME, TIMESTAMP;
 
@@ -20,7 +20,7 @@ CHART: Interpolation - Linear and LOCF
 3. Under Data select `INTERP_VALUE` and set the Aggregation to `Max`.
 4. Select `+ Add column` and select `LOCF_VALUE` and set Aggregation to `Max`.
 
-The chart will display a both linear and a step-based pattern for interpolated values between data points.
+The chart will display both LINEAR and LOCF for interpolated values between data points.
 */
 
 /* INTERPOLATE PROCEDURE - LOCF
@@ -48,11 +48,11 @@ CHART: Interpolation - LOCF
 1. Select the `Chart` sub tab below the worksheet.
 2. Under Data select `VALUE` and set the Aggregation to `Max`.
 
-The chart will display a step-based pattern where the prior value is interpolated between data points.
+The chart will display a LOCF value where the prior value is interpolated between data points.
 */
 
 /* INTERPOLATE PROCEDURE - LOCF
-Similar to the Interpolation - LOCF procedure call, this will create a Linear Interpolation return.
+Similar to the Interpolation - LOCF procedure call, this will create a Linear Interpolation table.
 
 Call Interpolate Procedure with Taglist, Start Time, End Time, and Intervals - LINEAR Interpolate
 */
@@ -66,7 +66,7 @@ CALL HOL_TIMESERIES.ANALYTICS.PROCEDURE_TS_INTERPOLATE(
     -- V_INTERVAL
     10,
     -- V_INTERP_TYPE
-    'INTERP'
+    'LINEAR'
 );
 
 /*
@@ -75,7 +75,7 @@ CHART: Interpolation - LINEAR
 1. Select the `Chart` sub tab below the worksheet.
 2. Under Data select `VALUE` and set the Aggregation to `Max`.
 
-The chart will display a smoother linear interpolated value between data points.
+The chart will display a smoother LINEAR interpolated value between data points.
 */
 
 /*
