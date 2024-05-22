@@ -87,7 +87,7 @@ reduces the number of visual data points, whilst retaining the shape and variabi
 
 Starting with a RAW query we can see the LTTB function in action, 
 where the function will downsample two hours of data for a one second tag,
-7200 data points to 500 whilst keeping the shape and variability of the values.
+7200 data points downsampled to 500 whilst keeping the shape and variability of the values.
 */
 
 /* RAW - 2 HOURS OF 1 SEC DATA
