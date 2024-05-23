@@ -6,7 +6,8 @@ SELECT SYSTEM$ALLOWLIST();
 
 /* EXTERNAL ACTIVITY
 
-Use the SYSTEM$ALLOWLIST() command to find your Snowflake account host detail: <account_identifier>.snowflakecomputing.com
+Use the SYSTEM$ALLOWLIST() command to find your Snowflake account "host" parameter where "type":"SNOWFLAKE_DEPLOYMENT_REGIONLESS": 
+<ACCOUNT_IDENTIFIER>.snowflakecomputing.com
 
 This host information will be used to update the deployment variable in the following files of your forked QuickStart repo:
 
