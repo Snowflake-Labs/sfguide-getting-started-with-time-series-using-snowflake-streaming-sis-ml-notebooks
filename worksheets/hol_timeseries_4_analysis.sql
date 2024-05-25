@@ -1,13 +1,16 @@
-/*
-SNOWFLAKE ANALYSIS SCRIPT
-*/
+/*##### ANALYSIS SCRIPT #####*/
 
 -- Set role, context, and warehouse
 USE ROLE ROLE_HOL_TIMESERIES;
 USE SCHEMA HOL_TIMESERIES.ANALYTICS;
 USE WAREHOUSE HOL_ANALYTICS_WH;
 
--- Run Time Series Analysis across various query profiles
+/*##############################
+QUERY TYPE: Explore RAW Data
+
+We'll start with a simple Raw query that returns time series data
+between an input start time and end time.
+##############################*/
 
 /* RAW
 Retrieve time series data between an input start time and end time.
@@ -19,7 +22,13 @@ AND TIMESTAMP < '2024-01-01 00:00:10'
 AND TAGNAME = '/IOT/SENSOR/TAG301'
 ORDER BY TAGNAME, TIMESTAMP;
 
--- STATISTICAL AGGREGATES, DISTRIBUTIONS, AND WATERMARKS
+/*##############################
+QUERY TYPE: Time Series Statistical Aggregates
+
+The following set of queries contains various Aggregate Functions covering
+counts, math operations, distributions, and watermarks.
+##############################*/
+
 /* COUNT AND COUNT DISTINCT
 Retrieve count and distinct counts within the time boundary.
 
@@ -61,10 +70,10 @@ GROUP BY TAGNAME
 ORDER BY TAGNAME;
 
 /* RELATIVE FREQUENCY
-Consider the use case of calculating the frequency and relative frequency of each value within a specific time frame,
-to determine how often the value occurs.
+Consider the use case of calculating the frequency and relative frequency of each value
+within a specific time frame, to determine how often the value occurs.
 
-Find the value that occurs most frequently within a time frame. 
+Find the value that occurs most frequently within a time frame.
 */
 SELECT 
     TAGNAME,
@@ -79,18 +88,18 @@ AND VALUE IS NOT NULL
 GROUP BY TAGNAME, VALUE
 ORDER BY TAGNAME, FREQUENCY DESC;
 
-/*
+/*##############################
 INFO: Query Result Data Contract
 
-The following **two** queries are written with a standard return set of columns,
-namely **TAGNAME, TIMESTAMP, and VALUE**.
+The following two queries are written with a standard return set of columns,
+namely TAGNAME, TIMESTAMP, and VALUE.
 
 This is a way to structure your query results format if looking to build an
 API for time series data, similar to a data contract with consumers.
 
 The TAGNAME is updated to show that a calculation has been applied to the returned values,
 and multiple aggregations can be grouped together using unions.
-*/
+##############################*/
 
 /* DISTRIBUTIONS - sample distributions statistics
 Retrieve distribution sample statistics within the time boundary.
@@ -172,8 +181,8 @@ AND TAGNAME = '/IOT/SENSOR/TAG301'
 GROUP BY TAGNAME
 ORDER BY TAGNAME;
 
-/*
-Time Series Analytics using Window Functions
+/*##############################
+QUERY TYPE: Time Series Analytics using Window Functions
 
 Window Functions enable aggregates to operate over groups of data,
 looking forward and backwards in the ordered data rows,
@@ -181,8 +190,9 @@ and returning a single result for each group.
 
 The OVER() clause defines the group of rows used in the calculation.
 The PARTITION BY sub-clause allows us to divide that window into sub-windows.
-The ORDER BY clause can be used with ASC (ascending) or DESC (descending), and allows ordering of the partition sub-window rows.
-*/
+The ORDER BY clause can be used with ASC (ascending) or DESC (descending),
+    and allows ordering of the partition sub-window rows.
+##############################*/
 
 /* WINDOW FUNCTIONS - LAG AND LEAD
 Consider the use case where you need to analyze the changes in the readings of a specific IoT sensor
@@ -250,14 +260,14 @@ AND TIMESTAMP < '2024-01-01 00:01:00'
 AND TAGNAME = '/IOT/SENSOR/TAG301'
 ORDER BY TAGNAME, TIMESTAMP;
 
-/*
-Snowsight Statistics
+/*##############################
+INFO: Snowsight Statistics
 
 Snowflake Snowsight will provide high level statistics and histograms for columns of data,
 as well as selected cells of numerical data, to the right of the returned result set.
-*/
+##############################*/
 
-/* SENSOR WITH TIME GAPS
+/* SCENARIO: SENSOR WITH TIME GAPS
 Now assume a scenario, where there are time gaps or missing data received from a sensor.
 Such as a sensor that sends roughly every 5 seconds, or if a sensor experiences a fault.
 
@@ -310,12 +320,14 @@ AND DATE_PART('SECOND', TIMESTAMP) NOT IN (20, 45, 55)
 AND TAGNAME = '/IOT/SENSOR/TAG101'
 ORDER BY TAGNAME, TIMESTAMP;
 
-/*
+/*##############################
+TABLE OUTPUT
+
 The first minute of data aligns for both RANGE BETWEEN and ROWS BETWEEN, however, after the first minute
 the rolling values will start to show variances due to the introduced time gaps.
-*/
+##############################*/
 
-/*
+/*##############################
 CHART: Rolling 1 MIN Average and Sum - showing differences between RANGE BETWEEN and ROWS BETWEEN
 
 1. Select the `Chart` sub tab below the worksheet.
@@ -324,10 +336,11 @@ CHART: Rolling 1 MIN Average and Sum - showing differences between RANGE BETWEEN
 4. Select `+ Add column` and select `ROW_AVG_1MIN` and set Aggregation to `Max`.
 
 The chart shows variances between the RANGE BETWEEN and ROWS BETWEEN occuring after the first minute.
-*/
+##############################*/
 
 /* WINDOW FUNCTIONS - RANGE BETWEEN
-Let's expand on RANGE BETWEEN and create a rolling AVG and SUM for the time **INTERVAL** five minutes preceding, inclusive of the current row.
+Let's expand on RANGE BETWEEN and create a rolling AVG and SUM for the time INTERVAL
+five minutes preceding, inclusive of the current row.
 
 INTERVAL - 5 MIN AVG and SUM preceding the current row
 */
@@ -344,7 +357,7 @@ AND TIMESTAMP <= '2024-01-01 01:00:00'
 AND TAGNAME = '/IOT/SENSOR/TAG101'
 ORDER BY TAGNAME, TIMESTAMP;
 
-/*
+/*##############################
 CHART: Rolling 5 MIN Average
 
 1. Select the `Chart` sub tab below the worksheet.
@@ -353,18 +366,22 @@ CHART: Rolling 5 MIN Average
 
 A rolling average could be useful in scenarios where you are trying to detect
 EXCEEDANCES in equipment operating limits over periods of time, such as a maximum pressure limit.
-*/
+##############################*/
 
-/* DOWNSAMPLING
+/*##############################
+QUERY TYPE: Downsampling
+
 Downsampling is used to decrease the frequency of time samples, such as from seconds to minutes,
-by placing time series data into fixed time intervals using aggregate operations on the existing values within each time interval.
-*/
+by placing time series data into fixed time intervals using aggregate operations on the existing
+values within each time interval.
+##############################*/
 
 /* TIME BINNING - 5 min AGGREGATE with START and END label
 Consider a use case where you want to obtain a broader view of a high frequency pressure gauge,
 by aggregating data into evenly spaced intervals to find trends over time.
 
-Create a downsampled time series data set with 5 minute aggregates, showing the START and END timestamp label of each interval.
+Create a downsampled time series data set with 5 minute aggregates,
+showing the START and END timestamp label of each interval.
 
 COUNT - Count of values within the time bin
 SUM - Sum of values within the time bin
@@ -385,10 +402,23 @@ AND TAGNAME = '/IOT/SENSOR/TAG301'
 GROUP BY TIME_SLICE(TIMESTAMP, 5, 'MINUTE', 'START'), TIME_SLICE(TIMESTAMP, 5, 'MINUTE', 'END'), TAGNAME
 ORDER BY TAGNAME, START_TIMESTAMP;
 
-/* TIME BINNING - 5 min AGGREGATE RESULTS
+/*##############################
+TABLE OUTPUT
+
+TIME BINNING - 5 min AGGREGATE RESULTS
+
 For a one second tag (3600 data points over an hour), the results will show in five minute intervals
 containing 300 data points each, along with aggregates for counts, sum, average, and 95th percentile values
-*/
+##############################*/
+
+/*##############################
+QUERY TYPE: Aligning Time Series Data
+
+Often you will need to align two data sets that may have differing time frequencies.
+
+To do this you can utilize the Time Series ASOF JOIN to
+pair closely matching records based on timestamps.
+##############################*/
 
 /* ASOF JOIN - Align a 1 second tag with a 5 second tag
 Consider the use case where you want to align a one second and five second pressure gauge to determine if there is a correlation.
@@ -409,7 +439,7 @@ AND ONE_SEC.TIMESTAMP >= '2024-01-03 09:15:00'
 AND ONE_SEC.TIMESTAMP <= '2024-01-03 09:45:00'
 ORDER BY ONE_SEC.TIMESTAMP;
 
-/*
+/*##############################
 CHART: Aligned Time Series Data
 
 1. Select the `Chart` sub tab below the worksheet.
@@ -419,19 +449,25 @@ CHART: Aligned Time Series Data
 
 One sensor is showing a significant drop whilst the other is showing an increase to a peak at similar times,
 which could potentially be an anomoly.
-*/
+##############################*/
 
-/* GAP FILLING
+/*##############################
+QUERY TYPE: Gap Filling
+
 Time gap filling is the process of generating timestamps for a given start and end time boundary,
 and joining to a tag with less frequent timestamp values, and filling missing / gap timestamps with a prior value.
 
+To do this you can utilize the Time Series ASOF JOIN to pair closely matching records based on timestamps.
+
 This can also be referred to as Upsampling or Forward Filling.
-*/
+##############################*/
 
 /* GAP FILLING - 1 SEC TIMESTAMPS WITH 5 SEC TAG
-Generate timestamps given a start and end time boundary, and use ASOF JOIN to a tag dataset with less frequent values, to forward fill using last observed value carried forward (LOCF).
+Generate timestamps given a start and end time boundary, and use ASOF JOIN
+to a tag dataset with less frequent values, to forward fill using last observed value carried forward (LOCF).
 
-TIME_PERIODS - A variable passed into the query to determine the number of time stamps generated for gap filling.
+1 - SET TIME_PERIODS - A variable passed into the query to determine the number of time stamps generated for gap filling.
+2 - Run the LOCF query passing in the TIME_PERIODS to the generated calendar
 */
 -- SET TIME_PERIODS IN SECONDS
 SET TIME_PERIODS = (SELECT TIMESTAMPDIFF('SECOND', '2024-01-01 00:00:00'::TIMESTAMP_NTZ, '2024-01-01 00:00:00'::TIMESTAMP_NTZ + INTERVAL '1 MINUTE'));
@@ -461,8 +497,8 @@ LEFT JOIN DATA L ON TIMES.TIMESTAMP = L.TIMESTAMP AND TIMES.TAGNAME = L.TAGNAME
 ASOF JOIN DATA A MATCH_CONDITION(TIMES.TIMESTAMP >= A.TIMESTAMP) ON TIMES.TAGNAME = A.TAGNAME
 ORDER BY TAGNAME, TIMESTAMP;
 
-/*
-Time Series Forecasting
+/*##############################
+QUERY TYPE: Forecasting
 
 Time-Series Forecasting employs a machine learning algorithm to predict future data by using historical time series data.
 
@@ -470,12 +506,12 @@ Forecasting is part of Snowflake Cortex, Snowflake’s intelligent, fully-manage
 
 Consider a use case where you want to predict expected production output based on a flow sensor.
 In this case, you could generate a time series forecast for a single tag looking forward one day for a flow sensor.
-*/
+##############################*/
 
 /* FORECAST DATA - Training Data Set - /IOT/SENSOR/TAG401
 A single tag of data for two weeks.
 
-Create a forecast training data view from historical data.
+1 - Create a forecast training data view from historical data.
 */
 CREATE OR REPLACE VIEW HOL_TIMESERIES.ANALYTICS.TS_TAG_READINGS_401 AS
 SELECT TAGNAME, TIMESTAMP, VALUE_NUMERIC AS VALUE
@@ -484,14 +520,14 @@ WHERE TAGNAME = '/IOT/SENSOR/TAG401'
 ORDER BY TAGNAME, TIMESTAMP;
 
 /* FORECAST MODEL - Training Data Set - /IOT/SENSOR/TAG401
-Create a Time-Series SNOWFLAKE.ML.FORECAST model using the training data view.
+2 - Create a Time-Series SNOWFLAKE.ML.FORECAST model using the training data view.
 
 INPUT_DATA - The data set used for training the forecast model
 SERIES_COLUMN - The column that splits multiple series of data, such as different TAGNAMES
 TIMESTAMP_COLNAME - The column containing the Time Series times
 TARGET_COLNAME - The column containing the target value
 
-Training the Time Series Forecast model** may take 2-3 minutes in this case.
+Training the Time Series Forecast model may take 2-3 minutes in this case.
 */
 CREATE OR REPLACE SNOWFLAKE.ML.FORECAST HOL_TIMESERIES_FORECAST(
     INPUT_DATA => SYSTEM$REFERENCE('VIEW', 'HOL_TIMESERIES.ANALYTICS.TS_TAG_READINGS_401'),
@@ -501,7 +537,7 @@ CREATE OR REPLACE SNOWFLAKE.ML.FORECAST HOL_TIMESERIES_FORECAST(
 );
 
 /* FORECAST MODEL OUTPUT - Forecast for 1 Day
-Test Forecasting model output for one day.
+3 - Test Forecasting model output for one day.
 
 SERIES_VALUE - Defines the series being forecasted - for example the specific tag
 FORECASTING_PERIODS - The number of periods being forecasted
@@ -509,7 +545,7 @@ FORECASTING_PERIODS - The number of periods being forecasted
 CALL HOL_TIMESERIES_FORECAST!FORECAST(SERIES_VALUE => TO_VARIANT('/IOT/SENSOR/TAG401'), FORECASTING_PERIODS => 1440);
 
 /* FORECAST COMBINED - Combined ACTUAL and FORECAST data
-Create a forecast analysis combining historical data with forecast data.
+4 - Create a forecast analysis combining historical data with forecast data.
 
 UNION the historical ACTUAL data with the FORECAST data using RESULT_SCAN
 */
@@ -534,7 +570,7 @@ SELECT
 FROM TABLE(RESULT_SCAN(-1))
 ORDER BY DATASET, TAGNAME, TIMESTAMP;
 
-/*
+/*##############################
 CHART: Time Series Forecast
 
 1. Select the `Chart` sub tab below the worksheet.
@@ -543,8 +579,6 @@ CHART: Time Series Forecast
 4. Select `+ Add column` and select `FORECAST` and set Aggregation to `Max`.
 
 The chart will show a flow sensor with ACTUALS and FORECAST values.
-*/
+##############################*/
 
-/*
-ANALYSIS SCRIPT COMPLETED
-*/
+/*##### ANALYSIS SCRIPT #####*/

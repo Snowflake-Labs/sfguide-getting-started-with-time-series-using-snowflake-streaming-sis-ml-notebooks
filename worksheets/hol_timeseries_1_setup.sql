@@ -1,6 +1,4 @@
-/*
-SNOWFLAKE SETUP SCRIPT
-*/
+/*##### SNOWFLAKE SETUP SCRIPT #####*/
 
 -- Login and assume ACCOUNTADMIN role
 USE ROLE ACCOUNTADMIN;
@@ -14,15 +12,13 @@ CREATE OR REPLACE USER USER_HOL_TIMESERIES DEFAULT_ROLE = "ROLE_HOL_TIMESERIES"
 COMMENT = "HOL Time Series user.";
 GRANT ROLE ROLE_HOL_TIMESERIES TO USER USER_HOL_TIMESERIES;
 
-/* EXTERNAL ACTIVITY
-
-A public key is setup in Github Codespace VS Code environment
+/*###### EXTERNAL ACTIVITY #####
+A public key is setup in Github Codespace VS Code environment: keys/rsa_key.pub
 
 Retrieve the public key detail and replace <RSA_PUBLIC_KEY>
 with the contents of the public key excluding
 the -----BEGIN PUBLIC KEY----- and -----END PUBLIC KEY----- lines
-
-*/
+##############################*/
 
 -- Assign lab user public key
 ALTER USER USER_HOL_TIMESERIES SET RSA_PUBLIC_KEY='<RSA_PUBLIC_KEY>';
@@ -84,6 +80,4 @@ GRANT CREATE SNOWFLAKE.ML.FORECAST ON SCHEMA HOL_TIMESERIES.ANALYTICS TO ROLE RO
 -- Notebooks
 GRANT CREATE NOTEBOOK ON SCHEMA HOL_TIMESERIES.ANALYTICS TO ROLE ROLE_HOL_TIMESERIES;
 
-/*
-SETUP SCRIPT COMPLETED
-*/
+/*##### SNOWFLAKE SETUP SCRIPT #####*/

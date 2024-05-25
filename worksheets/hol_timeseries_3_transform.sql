@@ -1,16 +1,17 @@
-/*
-SNOWFLAKE TRANSFORM SCRIPT
-*/
+/*##### TRANSFORM SCRIPT #####*/
 
--- Dynamic Tables Setup
+/*##############################
+-- Dynamic Tables Setup - START
+##############################*/
+
 -- Set role, context, and warehouse
 USE ROLE ROLE_HOL_TIMESERIES;
-USE HOL_TIMESERIES.TRANSFORM;
+USE SCHEMA HOL_TIMESERIES.TRANSFORM;
 USE WAREHOUSE HOL_TRANSFORM_WH;
 
 /* Tag metadata (Dimension)
 TAGNAME - uppercase concatenation of namespace and tag name
-QUALIFY - de-duplication filter to only include unique tag names
+QUALIFY - deduplication filter to only include unique tag names
 */
 CREATE OR REPLACE DYNAMIC TABLE HOL_TIMESERIES.TRANSFORM.DT_TS_TAG_METADATA
 TARGET_LAG = '1 MINUTE'
@@ -30,7 +31,7 @@ QUALIFY ROW_NUMBER() OVER (PARTITION BY UPPER(CONCAT('/', SRC.RECORD_METADATA:he
 
 /* Tag readings (Fact)
 TAGNAME - uppercase concatenation of namespace and tag name
-QUALIFY - de-duplication filter to only include unique tag readings based on tagname and timestamp
+QUALIFY - deduplication filter to only include unique tag readings based on tagname and timestamp
 */
 CREATE OR REPLACE DYNAMIC TABLE HOL_TIMESERIES.TRANSFORM.DT_TS_TAG_READINGS
 TARGET_LAG = '1 MINUTE'
@@ -47,12 +48,18 @@ SELECT
 FROM HOL_TIMESERIES.STAGING.RAW_TS_IOTSTREAM_DATA SRC
 QUALIFY ROW_NUMBER() OVER (PARTITION BY UPPER(CONCAT('/', SRC.RECORD_METADATA:headers:namespace::VARCHAR, '/', TRIM(SRC.RECORD_CONTENT:tagname::VARCHAR))), SRC.RECORD_CONTENT:timestamp::NUMBER ORDER BY SRC.RECORD_METADATA:offset::NUMBER) = 1;
 
+/*##############################
+-- Dynamic Tables Setup - END
+##############################*/
 
 
--- Analytics Views Setup
+/*##############################
+-- Analytics Views Setup - START
+##############################*/
+
 -- Set role, context, and warehouse
 USE ROLE ROLE_HOL_TIMESERIES;
-USE HOL_TIMESERIES.ANALYTICS;
+USE SCHEMA HOL_TIMESERIES.ANALYTICS;
 USE WAREHOUSE HOL_ANALYTICS_WH;
 
 -- Tag Reference View
@@ -74,6 +81,8 @@ SELECT
     READ.VALUE_NUMERIC
 FROM HOL_TIMESERIES.TRANSFORM.DT_TS_TAG_READINGS READ;
 
-/*
-TRANSFORM SCRIPT COMPLETED
-*/
+/*##############################
+-- Analytics Views Setup - END
+##############################*/
+
+/*##### TRANSFORM SCRIPT #####*/

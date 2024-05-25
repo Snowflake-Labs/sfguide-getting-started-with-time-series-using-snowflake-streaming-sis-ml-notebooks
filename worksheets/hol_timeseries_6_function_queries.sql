@@ -1,6 +1,16 @@
-/*
-SNOWFLAKE FUNCTION QUERIES SCRIPT
-*/
+/*##### FUNCTION QUERIES SCRIPT #####*/
+
+/*##############################
+QUERY TYPE: Interpolation / Upsampling
+
+Upsampling is used to increase the frequency of time samples.
+
+The first set of queries use the INTERPOLATE table functions and procedures
+to produce values for upsampling both last observed values carried forward (LOCF) and
+LINEAR interpolated smoothing values between data points.
+
+Call the interpolate table function to return both the linear interpolated values and last observed value carried forward (LOCF).
+##############################*/
 
 -- Set role, context, and warehouse
 USE ROLE ROLE_HOL_TIMESERIES;
@@ -8,11 +18,11 @@ USE SCHEMA HOL_TIMESERIES.ANALYTICS;
 USE WAREHOUSE HOL_ANALYTICS_WH;
 
 /* INTERPOLATE TABLE FUNCTION
-The Interpolation table function will return both the linear interpolated values and last observed value carried forward (LOCF).
+Call the interpolate table function to return both the linear interpolated values and last observed value carried forward (LOCF).
 */
 SELECT * FROM TABLE(HOL_TIMESERIES.ANALYTICS.FUNCTION_TS_INTERPOLATE('/IOT/SENSOR/TAG401', '2024-01-01 12:10:00'::TIMESTAMP_NTZ, '2024-01-01 13:10:00'::TIMESTAMP_NTZ, 10, 362)) ORDER BY TAGNAME, TIMESTAMP;
 
-/*
+/*##############################
 CHART: Interpolation - Linear and LOCF
 
 1. Select the `Chart` sub tab below the worksheet.
@@ -21,7 +31,7 @@ CHART: Interpolation - Linear and LOCF
 4. Select `+ Add column` and select `LOCF_VALUE` and set Aggregation to `Max`.
 
 The chart will display both LINEAR and LOCF for interpolated values between data points.
-*/
+##############################*/
 
 /* INTERPOLATE PROCEDURE - LOCF
 The Interpolation Procedure will accept a start time and end time, along with a bucket interval size in seconds.
@@ -43,14 +53,14 @@ CALL HOL_TIMESERIES.ANALYTICS.PROCEDURE_TS_INTERPOLATE(
     'LOCF'
 );
 
-/*
+/*##############################
 CHART: Interpolation - LOCF
 
 1. Select the `Chart` sub tab below the worksheet.
 2. Under Data select `VALUE` and set the Aggregation to `Max`.
 
 The chart will display a LOCF value where the prior value is interpolated between data points.
-*/
+##############################*/
 
 /* INTERPOLATE PROCEDURE - LINEAR
 Similar to the LOCF interpolation procedure call, this will create a Linear Interpolation table.
@@ -70,17 +80,17 @@ CALL HOL_TIMESERIES.ANALYTICS.PROCEDURE_TS_INTERPOLATE(
     'LINEAR'
 );
 
-/*
+/*##############################
 CHART: Interpolation - LINEAR
 
 1. Select the `Chart` sub tab below the worksheet.
 2. Under Data select `VALUE` and set the Aggregation to `Max`.
 
 The chart will display a smoother LINEAR interpolated value between data points.
-*/
+##############################*/
 
-/*
-LTTB Query
+/*##############################
+QUERY TYPE: Downsampling with LTTB
 
 The Largest Triangle Three Buckets (LTTB) algorithm is a time series downsampling algorithm that
 reduces the number of visual data points, whilst retaining the shape and variability of the time series data.
@@ -88,7 +98,7 @@ reduces the number of visual data points, whilst retaining the shape and variabi
 Starting with a RAW query we can see the LTTB function in action, 
 where the function will downsample two hours of data for a one second tag,
 7200 data points downsampled to 500 whilst keeping the shape and variability of the values.
-*/
+##############################*/
 
 /* RAW - 2 HOURS OF 1 SEC DATA
 Source of downsample - 7200 data points
@@ -100,7 +110,7 @@ AND TIMESTAMP <= '2024-01-09 23:00:00'
 AND TAGNAME = '/IOT/SENSOR/TAG301'
 ORDER BY TAGNAME, TIMESTAMP;
 
-/*
+/*##############################
 CHART: Raw
 
 1. Select the `Chart` sub tab below the worksheet.
@@ -108,7 +118,7 @@ CHART: Raw
 3. Under Data select `TIMESTAMP` and set the Bucketing to `Second`.
 
 7200 Data Points
-*/
+##############################*/
 
 /* LTTB - DOWNSAMPLE TO 500 DATA POINTS
 We can now pass the same data into the LTTB table function and request 500 data points to be returned.
@@ -127,7 +137,7 @@ FROM (
 CROSS JOIN TABLE(HOL_TIMESERIES.ANALYTICS.FUNCTION_TS_LTTB(DATE_PART(EPOCH_NANOSECOND, DATA.TIMESTAMP), DATA.VALUE, 500) OVER (PARTITION BY DATA.TAGNAME ORDER BY DATA.TIMESTAMP)) AS LTTB
 ORDER BY TAGNAME, TIMESTAMP;
 
-/*
+/*##############################
 CHART: LTTB Query
 
 1. Select the `Chart` sub tab below the worksheet.
@@ -135,8 +145,6 @@ CHART: LTTB Query
 3. Under Data select `TIMESTAMP` and set the Bucketing to `Second`.
 
 500 Data Points - The shape and variability of the values are retained, when compared to the 7200 data point RAW chart.
-*/
+##############################*/
 
-/*
-FUNCTION QUERIES SCRIPT COMPLETED
-*/
+/*##### FUNCTION QUERIES SCRIPT #####*/

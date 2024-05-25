@@ -1,13 +1,13 @@
-/*
-SNOWFLAKE FUNCTIONS SCRIPT
-*/
+/*##### FUNCTIONS SCRIPT #####*/
 
 -- Set role, context, and warehouse
 USE ROLE ROLE_HOL_TIMESERIES;
 USE SCHEMA HOL_TIMESERIES.ANALYTICS;
 USE WAREHOUSE HOL_ANALYTICS_WH;
 
+/*##############################
 -- Create Interpolate Table Function
+##############################*/
 CREATE OR REPLACE FUNCTION HOL_TIMESERIES.ANALYTICS.FUNCTION_TS_INTERPOLATE (
     V_TAGLIST VARCHAR,
     V_START_TIMESTAMP TIMESTAMP_NTZ,
@@ -113,7 +113,10 @@ FROM
 $$;
 
 
--- Add helper procedure to accept start and end times, and return either LOCF or Linear Interpolated Values
+/*##############################
+-- Create Interpolate Procedure
+-- Interpolate helper procedure to accept start and end times, and return either LOCF or Linear Interpolated Values
+##############################*/
 CREATE OR REPLACE PROCEDURE HOL_TIMESERIES.ANALYTICS.PROCEDURE_TS_INTERPOLATE (
     V_TAGLIST VARCHAR,
     V_FROM_TIME TIMESTAMP_NTZ,
@@ -147,7 +150,10 @@ BEGIN
 END;
 $$;
 
+
+/*##############################
 -- LTTB Downsampling Table Function
+##############################*/
 CREATE OR REPLACE FUNCTION HOL_TIMESERIES.ANALYTICS.FUNCTION_TS_LTTB (
     TIMESTAMP NUMBER,
     VALUE FLOAT,
@@ -181,6 +187,4 @@ class lttb_run:
             return df[['TIMESTAMP','VALUE']].iloc[idx]
 $$;
 
-/*
-FUNCTIONS SCRIPT COMPLETED
-*/
+/*##### FUNCTIONS SCRIPT #####*/
