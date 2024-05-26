@@ -3,18 +3,11 @@
 # Activate Environment
 conda activate hol-timeseries
 
-# Test Connection
-snow --config-file=".snowflake/config.toml" connection test --connection="hol-timeseries"
-snow --config-file=".snowflake/config.toml" connection test --connection="hol-timeseries-streamlit"
-
 # Manual Data Load
 snow --config-file=".snowflake/config.toml" stage create "STAGE_TS_DATA" --connection="hol-timeseries"
 snow --config-file=".snowflake/config.toml" stage copy ./iotstream/STREAM_DATA.CSV @STAGE_TS_DATA --overwrite --connection="hol-timeseries"
 snow --config-file=".snowflake/config.toml" stage copy ./help/snowflake_manual_load.sql @STAGE_TS_DATA --overwrite --connection="hol-timeseries"
 snow --config-file=".snowflake/config.toml" stage execute "@STAGE_TS_DATA" --connection="hol-timeseries"
 
-# List Staged Files
+# List Manual Data Stage
 snow --config-file=".snowflake/config.toml" stage list-files @STAGE_TS_DATA --connection="hol-timeseries"
-
-# Streamlit
-snow --config-file=".snowflake/config.toml" streamlit deploy --replace --project "streamlit" --connection="hol-timeseries-streamlit"
