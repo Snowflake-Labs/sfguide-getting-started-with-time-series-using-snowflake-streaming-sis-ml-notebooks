@@ -18,8 +18,8 @@ CREATE OR REPLACE TABLE HOL_TIMESERIES.STAGING.RAW_TS_STAGE_DATA (
 
 -- Copy data into stage table
 COPY INTO HOL_TIMESERIES.STAGING.RAW_TS_STAGE_DATA
-FROM @HOL_TIMESERIES.STAGING.STAGE_TS_DATA
-PATTERN = '.*[.]CSV'
+FROM s3://sfquickstarts/vhol_getting_started_with_time_series/
+PATTERN = '.*[.]csv'
 FILE_FORMAT = (TYPE = 'CSV', SKIP_HEADER = 1);
 
 -- Transform and insert data from stage table to stream format
