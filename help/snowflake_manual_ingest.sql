@@ -1,4 +1,4 @@
-/*##### BAKCUP INGEST SCRIPT #####*/
+/*##### MANUAL INGEST SCRIPT #####*/
 
 -- Set role, context, and warehouse
 USE ROLE ROLE_HOL_TIMESERIES;
@@ -40,7 +40,6 @@ SELECT
         'value', VALUE
     ) AS RECORD_CONTENT
 FROM HOL_TIMESERIES.STAGING.RAW_TS_STAGE_DATA
-ORDER BY READING
-;
+ORDER BY READING;
 
-/*##### BAKCUP INGEST SCRIPT #####*/
+/*##### MANUAL INGEST SCRIPT #####*/
