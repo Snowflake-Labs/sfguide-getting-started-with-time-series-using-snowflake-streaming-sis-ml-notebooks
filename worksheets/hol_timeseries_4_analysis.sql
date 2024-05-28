@@ -502,7 +502,7 @@ QUERY TYPE: Forecasting
 
 Time-Series Forecasting employs a machine learning algorithm to predict future data by using historical time series data.
 
-Forecasting is part of Snowflake Cortex, Snowflake’s intelligent, fully-managed AI and ML service.
+Forecasting is part of ML Functions in Snowflake Cortex, Snowflake’s intelligent, fully-managed AI and ML service.
 
 Consider a use case where you want to predict expected production output based on a flow sensor.
 In this case, you could generate a time series forecast for a single tag looking forward one day for a flow sensor.
@@ -511,16 +511,16 @@ In this case, you could generate a time series forecast for a single tag looking
 /* FORECAST DATA - Training Data Set - /IOT/SENSOR/TAG401
 A single tag of data for two weeks.
 
-1 - Create a forecast training data view from historical data.
+1 - Create a forecast training data set from historical data. This will use a temporary table.
 */
-CREATE OR REPLACE VIEW HOL_TIMESERIES.ANALYTICS.TS_TAG_READINGS_401 AS
+CREATE OR REPLACE TEMPORARY TABLE HOL_TIMESERIES.ANALYTICS.TEMP_TS_TAG_TRAIN AS
 SELECT TAGNAME, TIMESTAMP, VALUE_NUMERIC AS VALUE
 FROM HOL_TIMESERIES.ANALYTICS.TS_TAG_READINGS
 WHERE TAGNAME = '/IOT/SENSOR/TAG401'
 ORDER BY TAGNAME, TIMESTAMP;
 
 /* FORECAST MODEL - Training Data Set - /IOT/SENSOR/TAG401
-2 - Create a Time-Series SNOWFLAKE.ML.FORECAST model using the training data view.
+2 - Create a Time-Series SNOWFLAKE.ML.FORECAST model using the training data set.
 
 INPUT_DATA - The data set used for training the forecast model
 SERIES_COLUMN - The column that splits multiple series of data, such as different TAGNAMES
@@ -530,7 +530,7 @@ TARGET_COLNAME - The column containing the target value
 Training the Time Series Forecast model may take 2-3 minutes in this case.
 */
 CREATE OR REPLACE SNOWFLAKE.ML.FORECAST HOL_TIMESERIES_FORECAST(
-    INPUT_DATA => SYSTEM$REFERENCE('VIEW', 'HOL_TIMESERIES.ANALYTICS.TS_TAG_READINGS_401'),
+    INPUT_DATA => SYSTEM$REFERENCE('TABLE', 'HOL_TIMESERIES.ANALYTICS.TEMP_TS_TAG_TRAIN'),
     SERIES_COLNAME => 'TAGNAME',
     TIMESTAMP_COLNAME => 'TIMESTAMP',
     TARGET_COLNAME => 'VALUE'
@@ -556,7 +556,7 @@ SELECT
     VALUE,
     NULL AS FORECAST,
     NULL AS UPPER
-FROM HOL_TIMESERIES.ANALYTICS.TS_TAG_READINGS_401
+FROM HOL_TIMESERIES.ANALYTICS.TS_TAG_READINGS
 WHERE TAGNAME = '/IOT/SENSOR/TAG401'
 AND TO_DATE(TIMESTAMP) = '2024-01-14'
 UNION ALL
