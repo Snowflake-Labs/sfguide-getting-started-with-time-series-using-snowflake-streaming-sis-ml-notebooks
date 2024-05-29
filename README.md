@@ -5,7 +5,7 @@
 In this guide, you will get to explore Time Series functionality in Snowflake using:
 * [Snowpipe Streaming](https://docs.snowflake.com/en/user-guide/data-load-snowpipe-streaming-overview)
 * [Dynamic Tables](https://docs.snowflake.com/en/user-guide/dynamic-tables-intro)
-* Native Time Series Functions & Cortex ML functions
+* [Native Time Series Functions](https://docs.snowflake.com/en/user-guide/querying-time-series-data) & [Cortex ML functions](https://docs.snowflake.com/en/guides-overview-ml-functions#time-series-functions)
 * [Snowpark UDFs](https://docs.snowflake.com/en/developer-guide/udf/udf-overview)
 * [Streamlit in Snowflake](https://docs.snowflake.com/en/developer-guide/streamlit/about-streamlit)
 
