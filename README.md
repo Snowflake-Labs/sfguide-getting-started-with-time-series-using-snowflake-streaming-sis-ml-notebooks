@@ -1,6 +1,4 @@
-# sfguide-getting-started-with-time-series-using-snowflake-streaming-sis-ml-notebooks
-
-## Getting Started with Time Series Analytics for IoT in Snowflake
+# Getting Started with Time Series Analytics for IoT in Snowflake
 
 ## Overview
 
