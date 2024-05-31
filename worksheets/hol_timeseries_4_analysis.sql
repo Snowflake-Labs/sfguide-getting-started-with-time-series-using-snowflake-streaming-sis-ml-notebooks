@@ -581,4 +581,25 @@ CHART: Time Series Forecast
 The chart will show a flow sensor with ACTUALS and FORECAST values.
 ##############################*/
 
+/*##############################
+SNOWFLAKE COPILOT: Ask Copilot
+
+Tell me about this data set
+##############################*/
+
+SELECT * FROM HOL_TIMESERIES.ANALYTICS.TS_TAG_REFERENCE LIMIT 10;
+SELECT * FROM HOL_TIMESERIES.ANALYTICS.TS_TAG_READINGS LIMIT 10;
+
+/*##############################
+SNOWFLAKE COPILOT: Data Prompts
+
+Show me namespace, tag name, time, and latest value for tag /IOT/SENSOR/TAG301
+
+Show me the average values by namespace and tag name
+
+Show me the max value, and time for tag name /IOT/SENSOR/TAG101 on January 10 2024 by tag name
+
+Show me 1hr averages for tag /IOT/SENSOR/TAG301 on January 3 2024 by tag
+##############################*/
+
 /*##### ANALYSIS SCRIPT #####*/
