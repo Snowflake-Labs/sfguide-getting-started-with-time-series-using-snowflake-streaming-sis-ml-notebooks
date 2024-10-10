@@ -9,4 +9,4 @@ chmod 0600 ".snowflake/config.toml"
 chmod 0600 ".streamlit/config.toml"
 wget https://sfquickstarts.s3.us-west-1.amazonaws.com/vhol_getting_started_with_time_series/iotstream.zip
 unzip -o iotstream.zip
-rm -Rf ~/.snowflake/
+rm -Rf ~/.snowflake/config.toml
