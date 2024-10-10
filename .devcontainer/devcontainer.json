@@ -38,5 +38,10 @@
 				"vscjava.vscode-java-pack"
 			]
 		}
+	},
+
+	// Environment Variables
+	"containerEnv": {
+    	"SNOWFLAKE_HOME": ".snowflake"
 	}
 }
