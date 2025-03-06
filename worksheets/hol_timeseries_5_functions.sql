@@ -165,12 +165,12 @@ RETURNS TABLE (
 )
 LANGUAGE PYTHON
 RUNTIME_VERSION = 3.11
-PACKAGES = ('pandas', 'plotly-resampler')
+PACKAGES = ('pandas','tsdownsample')
 HANDLER = 'lttb_run'
 AS $$
 from _snowflake import vectorized
 import pandas as pd
-from plotly_resampler.aggregation.algorithms.lttb_py import LTTB_core_py
+from tsdownsample import LTTBDownsampler
 
 class lttb_run:
     @vectorized(input=pd.DataFrame)
@@ -179,7 +179,7 @@ class lttb_run:
         if df.SIZE.iat[0] >= len(df.index):
             return df[['TIMESTAMP','VALUE']]
         else:
-            idx = LTTB_core_py.downsample(
+            idx = LTTBDownsampler().downsample(
                 df.TIMESTAMP.to_numpy(),
                 df.VALUE.to_numpy(),
                 n_out=df.SIZE.iat[0]
