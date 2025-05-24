@@ -1,3 +1,5 @@
+default_connection_name = "hol-timeseries"
+
 [connections.hol-timeseries]
 account = "<ACCOUNT_IDENTIFIER>"
 user = "USER_HOL_TIMESERIES"
