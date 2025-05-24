@@ -1,11 +1,15 @@
-definition_version: 1
-streamlit:
-  name: HOL_TIMESERIES_STREAMLIT
-  stage: HOL_TIMESERIES.ANALYTICS.STAGE_TS_STREAMLIT
-  query_warehouse: HOL_ANALYTICS_WH
-  main_file: streamlit/1_TS_Home.py
-  env_file: streamlit/environment.yml
-  pages_dir: streamlit/pages/
-  additional_source_files:
-    - streamlit/common/snowflake.png
-    - streamlit/common/snowflakelogo.png
+definition_version: 2
+entities:
+  streamlit:
+    type: streamlit
+    identifier: HOL_TIMESERIES_STREAMLIT
+    stage: STAGE_TS_STREAMLIT
+    query_warehouse: HOL_ANALYTICS_WH
+    main_file: 1_TS_Home.py
+    pages_dir: pages/
+    artifacts:
+      - environment.yml
+      - 1_TS_Home.py
+      - pages/
+      - common/snowflake.png
+      - common/snowflakelogo.png
