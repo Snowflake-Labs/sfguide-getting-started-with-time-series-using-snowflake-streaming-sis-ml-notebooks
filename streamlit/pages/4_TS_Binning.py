@@ -252,10 +252,10 @@ if taglist:
             st.session_state["start_time"] = datetime.datetime.now(datetime.timezone.utc) - timedelta(hours=1)
             st.session_state["end_date"] = datetime.datetime.now(datetime.timezone.utc) + timedelta(hours=1)
             st.session_state["end_time"] = datetime.datetime.now(datetime.timezone.utc) + timedelta(hours=1)
-            st.experimental_rerun()
+            st.rerun()
 
         if refresh_mode == False:
             refresh = st.button("Refresh")
             if refresh:
                 st.session_state["times_refreshed"] == 0
-                st.experimental_rerun()
+                st.rerun()
