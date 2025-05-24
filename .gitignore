@@ -169,6 +169,7 @@ notebooks/test*
 # Streamlist
 streamlit/test*
 streamlit/pages/test*
+streamlit/output
 
 # Notebooks
 iotstream
