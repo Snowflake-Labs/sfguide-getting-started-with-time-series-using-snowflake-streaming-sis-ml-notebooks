@@ -8,11 +8,10 @@ channels:
   - https://repo.anaconda.com/pkgs/snowflake
 dependencies:
   - python=3.11
-  - snowflake-snowpark-python[secure-local-storage,pandas]=1.13.0
+  - snowflake-snowpark-python[secure-local-storage,pandas]=1.31.1
   - altair=4.2.2
   - pandas=2.0.3
   - setuptools=68.2.2
-  - plotly-resampler=0.8.3.2
   - h5py=3.9.0
   - notebook=7.0.8
   - openpyxl=3.0.10
@@ -23,3 +22,4 @@ dependencies:
     - streamlit==1.45.0
     - streamlit-extras==0.6.0
     - snowflake-cli==3.8.3
+    - pyarrow==18.1.0
