@@ -8,4 +8,4 @@ dependencies:
   - altair=4.2.2
   - pandas=2.0.3
   - plotly=5.19.0
-  - plotly-resampler=0.8.3.2
+  - tsdownsample=0.1.3

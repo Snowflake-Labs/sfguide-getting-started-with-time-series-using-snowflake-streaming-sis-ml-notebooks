@@ -17,8 +17,9 @@ dependencies:
   - notebook=7.0.8
   - openpyxl=3.0.10
   - matplotlib=3.8.0
+  - tsdownsample=0.1.3
   - pip
   - pip:
     - streamlit==1.26.0
     - streamlit-extras==0.2.7
-    - snowflake-cli-labs==2.3.0
+    - snowflake-cli==3.8.3
