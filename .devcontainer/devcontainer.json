@@ -42,6 +42,6 @@
 
 	// Environment Variables
 	"containerEnv": {
-    	"SNOWFLAKE_HOME": ".snowflake"
+    	"SNOWFLAKE_HOME": "/workspaces/sfguide-getting-started-with-time-series-using-snowflake-streaming-sis-ml-notebooks/.snowflake"
 	}
 }

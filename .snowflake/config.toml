@@ -1,4 +1,4 @@
-default_connection_name = "hol-timeseries"
+default_connection_name = "hol_timeseries"
 
 [connections.hol-timeseries]
 account = "<ACCOUNT_IDENTIFIER>"
@@ -8,7 +8,7 @@ database = "HOL_TIMESERIES"
 schema = "STAGING"
 warehouse = "HOL_TRANSFORM_WH"
 authenticator = "SNOWFLAKE_JWT"
-private_key_path = "keys/rsa_key.p8"
+private_key_path = "/workspaces/sfguide-getting-started-with-time-series-using-snowflake-streaming-sis-ml-notebooks/keys/rsa_key.p8"
 
 [connections.hol-timeseries-streamlit]
 account = "<ACCOUNT_IDENTIFIER>"
@@ -18,4 +18,4 @@ database = "HOL_TIMESERIES"
 schema = "ANALYTICS"
 warehouse = "HOL_ANALYTICS_WH"
 authenticator = "SNOWFLAKE_JWT"
-private_key_path = "keys/rsa_key.p8"
+private_key_path = "/workspaces/sfguide-getting-started-with-time-series-using-snowflake-streaming-sis-ml-notebooks/keys/rsa_key.p8"
