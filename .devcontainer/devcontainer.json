@@ -19,7 +19,7 @@
 		"vscode": {
 			// Set VSCode settings
 			"settings": {
-				"python.defaultInterpreterPath": "/opt/conda/envs/hol-timeseries",
+				"python.defaultInterpreterPath": "/usr/local/conda/envs/hol-timeseries/bin/python",
 				"python.terminal.activateEnvInCurrentTerminal": true
 			},
 			// Add the IDs of extensions you want installed when the container is created.
